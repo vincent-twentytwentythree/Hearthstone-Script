@@ -41,6 +41,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
     override fun executeOutCard() {
         if (War.me.isValid()){
             val me = War.me
+            // MYWEN
+            val rival = War.rival
             var plays = me.playArea.cards.toList()
 //            使用地标
             plays.forEach {card->
@@ -57,21 +59,31 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     val card = simulateWeightCard.card
                     if (me.usableResource >= card.cost){
                         if (card.cardType === CardTypeEnum.SPELL){
-                            me.playArea.cards.find { card-> card.canBeTargetedByMe() }?.let {
-                                card.action.power(it)
-                            }?:let {
-                                card.action.power()
-                            }
+                            // rival.playArea.cards.find { card-> card.canBeTargetedByMe() }?.let {
+                            //     card.action.power(it)
+                            // }?:let {
+                            //     card.action.power()
+                            // }
+                            card.action.power(rival.playArea.hero)
                         }else{
                             if (me.playArea.isFull) break
-                            card.isBattlecry.isTrue {
-                                me.playArea.cards.find { card-> card.canAttack() }?.let {
+                            // card.isBattlecry.isTrue {
+                            //     rival.playArea.cards.find { card-> card.canAttack() }?.let {
+                            //         card.action.power(it)
+                            //     }?:let {
+                            //         card.action.power()
+                            //     }
+                            // }.isFalse {
+                            //     card.action.power()
+                            // }
+                            rival.playArea.cards.find { card-> card.isTaunt }?.let {        
+                                card.action.power(it)
+                            }?:let {
+                                rival.playArea.cards.find { card-> card.canBeAttacked() }?.let {        
                                     card.action.power(it)
                                 }?:let {
                                     card.action.power()
                                 }
-                            }.isFalse {
-                                card.action.power()
                             }
                         }
                     }

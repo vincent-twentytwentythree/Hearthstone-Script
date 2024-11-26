@@ -97,6 +97,13 @@ class HsCommonDeckStrategy : DeckStrategy() {
     }
 
     override fun executeDiscoverChooseCard(vararg cards: Card): Int {
-        return 1
+        for ((index, card) in cards.withIndex()) {
+            // MYWEN
+            log.info { "card：" + card.toSimpleString() + " index: " + index }
+            if (card.cardId == "GDB_430") {
+                return index
+            }
+        }
+        return 0
     }
 }
