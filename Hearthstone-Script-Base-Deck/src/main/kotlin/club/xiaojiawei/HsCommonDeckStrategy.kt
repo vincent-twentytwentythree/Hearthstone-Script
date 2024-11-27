@@ -103,6 +103,9 @@ class HsCommonDeckStrategy : DeckStrategy() {
             if (card.cardId == "GDB_430") {
                 return index
             }
+            else if (card.cardId == "VAC_321t") {
+                return index
+            }
         }
         return 0
     }

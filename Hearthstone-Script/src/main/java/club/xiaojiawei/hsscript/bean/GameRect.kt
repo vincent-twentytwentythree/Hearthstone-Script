@@ -61,6 +61,23 @@ data class GameRect(val left: Double, val right: Double, val top: Double, val bo
         GameUtil.leftButtonClick(endPos)
     }
 
+    @JvmOverloads
+    fun lClickMoveDoubleLClick(endRect: GameRect?, isCancel: Boolean = true) {
+        if (endRect == null) {
+            return
+        }
+        if (isCancel) cancel()
+        val startPos = getClickPos()
+        val endPos = endRect.getClickPos()
+        GameUtil.leftButtonClick(startPos)
+        SystemUtil.delay(80, 140)
+        GameUtil.moveMouse(startPos, endPos)
+        SystemUtil.delay(60, 120)
+        GameUtil.leftButtonClick(endPos)
+        SystemUtil.delay(60, 120)
+        GameUtil.leftButtonClick(endPos)
+    }
+
     fun move() {
         GameUtil.moveMouse(getClickPos())
     }

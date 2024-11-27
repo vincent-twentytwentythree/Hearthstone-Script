@@ -10,6 +10,8 @@ import club.xiaojiawei.status.War.me
 import club.xiaojiawei.status.War.rival
 import kotlin.math.min
 
+import club.xiaojiawei.config.log
+
 /**
  * 通用卡牌操作
  * @author 肖嘉威
@@ -67,7 +69,13 @@ class CommonCardAction : CardAction(false) {
             if (card.area is PlayArea) {
                 val endRect = getCardRect(card)
                 if (endRect.isValid()) {
-                    startRect.lClickMoveLClick(endRect)
+                    var cardId = belongCard!!.cardId
+                    if (cardId == "GDB_901") {
+                        startRect.lClickMoveDoubleLClick(endRect)
+                    }
+                    else {
+                        startRect.lClickMoveLClick(endRect)
+                    }
                     lastRect = endRect
                     return true
                 }

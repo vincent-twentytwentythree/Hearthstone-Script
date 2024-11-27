@@ -4,6 +4,8 @@ import club.xiaojiawei.bean.Card
 import club.xiaojiawei.enums.CardTypeEnum
 import java.util.function.Supplier
 
+import club.xiaojiawei.config.log
+
 /**
  * @author 肖嘉威
  * @date 2024/9/8 18:42

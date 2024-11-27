@@ -44,6 +44,10 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // MYWEN
             val rival = War.rival
             var plays = me.playArea.cards.toList()
+            var toRivalList = War.rival.playArea.cards.toList()
+            var toMeList = War.me.playArea.cards.toList()
+            log.info { "rival: $toRivalList" }
+            log.info { "me: $toMeList" }
 //            使用地标
             plays.forEach {card->
                 if (card.cardType === CardTypeEnum.LOCATION && !card.isLocationActionCooldown){
@@ -68,23 +72,27 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         }else{
                             if (me.playArea.isFull) break
                             // card.isBattlecry.isTrue {
-                            //     rival.playArea.cards.find { card-> card.canAttack() }?.let {
-                            //         card.action.power(it)
-                            //     }?:let {
-                            //         card.action.power()
-                            //     }
+                            var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+                            var canAttackCard = rival.playArea.cards.find { card-> card.canAttack() }
+                            var firstCard = rival.playArea.cards.firstOrNull()
+                            tauntCard?.let {
+                                card.action.power(it)
+                            }?:let {
+                                canAttackCard?.let {
+                                    card.action.power(it)
+                                }?:let {
+                                    firstCard?.let {
+                                        card.action.power(firstCard)
+                                    }
+                                    ?:let{
+                                        card.action.power()
+                                    }
+                                }
+                            }
+                            log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             // }.isFalse {
                             //     card.action.power()
                             // }
-                            rival.playArea.cards.find { card-> card.isTaunt }?.let {        
-                                card.action.power(it)
-                            }?:let {
-                                rival.playArea.cards.find { card-> card.canBeAttacked() }?.let {        
-                                    card.action.power(it)
-                                }?:let {
-                                    card.action.power()
-                                }
-                            }
                         }
                     }
                 }
