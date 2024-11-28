@@ -68,12 +68,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             // }?:let {
                             //     card.action.power()
                             // }
+                            if (card.cardId == "GDB_445") {
+                                DeckStrategyUtil.cleanPlay()
+                            }
                             card.action.power(rival.playArea.hero)
                         }else{
                             if (me.playArea.isFull) break
                             // card.isBattlecry.isTrue {
                             var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                            var canAttackCard = rival.playArea.cards.find { card-> card.canAttack() }
+                            var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
                             var firstCard = rival.playArea.cards.firstOrNull()
                             tauntCard?.let {
                                 card.action.power(it)
@@ -82,7 +85,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     card.action.power(it)
                                 }?:let {
                                     firstCard?.let {
-                                        card.action.power(firstCard)
+                                        card.action.power(it)
                                     }
                                     ?:let{
                                         card.action.power()
