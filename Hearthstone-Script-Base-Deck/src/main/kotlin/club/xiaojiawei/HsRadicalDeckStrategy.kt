@@ -69,7 +69,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             //     card.action.power()
                             // }
                             if (card.cardId == "GDB_445") {
-                                DeckStrategyUtil.cleanPlay()
+                                me.playArea.cards.filter { card -> card.canAttack(false) } .forEach {
+                                    card.action.attackHero()
+                                }
                             }
                             card.action.power(rival.playArea.hero)
                         }else{
