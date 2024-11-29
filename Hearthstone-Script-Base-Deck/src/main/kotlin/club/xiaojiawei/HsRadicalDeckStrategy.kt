@@ -61,6 +61,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 log.info { "待出牌：$sortCard" }
                 for (simulateWeightCard in sortCard) {
                     val card = simulateWeightCard.card
+                    log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                     if (me.usableResource >= card.cost){
                         if (card.cardType === CardTypeEnum.SPELL){
                             // rival.playArea.cards.find { card-> card.canBeTargetedByMe() }?.let {
@@ -69,32 +70,60 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             //     card.action.power()
                             // }
                             if (card.cardId == "GDB_445") {
-                                me.playArea.cards.filter { card -> card.canAttack(false) } .forEach {
-                                    card.action.attackHero()
+                                var highCostCount = me.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
+                                var highCostCountRival = rival.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
+                                if (highCostCount >= 3 && highCostCountRival <= 2) {
+                                    log.info { "too much high cost cards" }
+                                    continue;
+                                }
+                                me.playArea.cards.filter { playCard -> playCard.canAttack(false) }.forEach { playCard -> {
+                                        var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+                                        tauntCard?.let {
+                                            log.info { "card: $playCard, attack: $tauntCard" }
+                                            playCard.action.attack(tauntCard)
+                                        }?:let {
+                                            log.info { "card: $playCard, attackHero" }
+                                            playCard.action.attackHero()
+                                        }
+                                    }
                                 }
                             }
-                            card.action.power(rival.playArea.hero)
+                            if (card.cardId == "TOY_508") {
+                                card.action.power(rival.playArea.hero)
+                            }
+                            else if (card.cardId.startsWith("VAC_323") && toRivalList.size == 0) {
+                                continue;
+                            }
+                            else {
+                                card.action.power()
+                            }
                         }else{
                             if (me.playArea.isFull) break
                             // card.isBattlecry.isTrue {
-                            var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                            var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
-                            var firstCard = rival.playArea.cards.firstOrNull()
-                            tauntCard?.let {
-                                card.action.power(it)
-                            }?:let {
-                                canAttackCard?.let {
+                            if (card.cardId == "GDB_901") {
+                                var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+                                var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
+                                var firstCard = rival.playArea.cards.firstOrNull()
+                                tauntCard?.let {
                                     card.action.power(it)
                                 }?:let {
-                                    firstCard?.let {
+                                    canAttackCard?.let {
                                         card.action.power(it)
-                                    }
-                                    ?:let{
-                                        card.action.power()
+                                    }?:let {
+                                        firstCard?.let {
+                                            card.action.power(it)
+                                        }
+                                        ?:let{
+                                            card.action.power()
+                                        }
                                     }
                                 }
+                                log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             }
-                            log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
+                            else {
+                                card.action.power()
+                            }
+
                             // }.isFalse {
                             //     card.action.power()
                             // }
