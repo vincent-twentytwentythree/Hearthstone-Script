@@ -76,15 +76,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     log.info { "too much high cost cards" }
                                     continue;
                                 }
-                                me.playArea.cards.filter { playCard -> playCard.canAttack(false) }.forEach { playCard -> {
-                                        var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                                        tauntCard?.let {
-                                            log.info { "card: $playCard, attack: $tauntCard" }
-                                            playCard.action.attack(tauntCard)
-                                        }?:let {
-                                            log.info { "card: $playCard, attackHero" }
-                                            playCard.action.attackHero()
-                                        }
+                                log.info { "start storm, ${plays}" }
+                                plays.filter{ playCard -> playCard.canAttack(false) }.forEach { playCard ->
+                                    var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+                                    tauntCard?.let {
+                                        log.info { "card: $playCard, attack: $tauntCard" }
+                                        playCard.action.attack(tauntCard)
+                                    }?:let {
+                                        log.info { "card: $playCard, attackHero" }
+                                        playCard.action.attackHero()
                                     }
                                 }
                             }
