@@ -89,11 +89,25 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 }
                             }
                             if (card.cardId == "TOY_508" ||
-                            card.cardId == "TTN_454") {
+                            card.cardId == "TTN_454" ||
+                            card.cardId == "CORE_AT_064" ||
+                            card.cardId == "MIS_709"
+                            ) {
                                 card.action.power(rival.playArea.hero)
                             }
-                            else if (card.cardId.startsWith("VAC_323") && toRivalList.size == 0) {
+                            else if ( (card.cardId.startsWith("VAC_323") ||
+                            card.cardId == "CORE_CS2_093")
+                            && toRivalList.size == 0) {
                                 continue;
+                            }
+                            else if (card.cardId.startsWith("VAC_916")) {
+                                var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                                if (highCost == null) {
+                                    card.action.power(me.playArea.hero)
+                                }
+                                else {
+                                    card.action.power(highCost)
+                                }
                             }
                             else {
                                 card.action.power()
