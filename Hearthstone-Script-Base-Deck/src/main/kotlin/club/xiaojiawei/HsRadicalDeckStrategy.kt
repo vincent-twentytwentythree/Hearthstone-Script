@@ -69,7 +69,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             // }?:let {
                             //     card.action.power()
                             // }
-                            if (card.cardId == "GDB_445") {
+                            if (card.cardId == "GDB_445") { // 陨石风暴
                                 var highCostCount = me.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
                                 var highCostCountRival = rival.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
                                 if (highCostCount >= 3 && highCostCountRival <= 2) {
@@ -88,22 +88,31 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     }
                                 }
                             }
-                            if (card.cardId == "TOY_508" ||
-                            card.cardId == "TTN_454" ||
-                            card.cardId == "CORE_AT_064" ||
-                            card.cardId == "MIS_709"
+                            if (card.cardId == "TOY_508" || //立体书
+                            card.cardId == "TTN_454" || //  殉船
+                            card.cardId == "CORE_AT_064" || // 怒袭
+                            card.cardId == "MIS_709" // 圣光荧光棒
                             ) {
                                 card.action.power(rival.playArea.hero)
                             }
-                            else if ( (card.cardId.startsWith("VAC_323") ||
-                            card.cardId == "CORE_CS2_093")
+                            else if ( (card.cardId.startsWith("VAC_323") || // 麦芽岩浆
+                            card.cardId == "CORE_CS2_093") // 奉献
                             && toRivalList.size == 0) {
                                 continue;
                             }
-                            else if (card.cardId.startsWith("VAC_916")) {
-                                var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                            else if (card.cardId.startsWith("VAC_916")) { // 神圣佳酿
+                                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                                 if (highCost == null) {
                                     card.action.power(me.playArea.hero)
+                                }
+                                else {
+                                    card.action.power(highCost)
+                                }
+                            }
+                            else if (card.cardId.startsWith("TTN_079")) { // 虫外有虫
+                                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                                if (highCost == null) {
+                                    continue;
                                 }
                                 else {
                                     card.action.power(highCost)
@@ -112,10 +121,11 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             else {
                                 card.action.power()
                             }
-                        }else{
+                        }
+                        else {
                             if (me.playArea.isFull) break
                             // card.isBattlecry.isTrue {
-                            if (card.cardId == "GDB_901") {
+                            if (card.cardId == "GDB_901") { // 极紫外破坏者
                                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
                                 var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
                                 var firstCard = rival.playArea.cards.firstOrNull()
@@ -135,8 +145,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 }
                                 log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             }
-                            else if (card.cardId == "CS3_034" && plays.size >= 5) {
+                            else if (card.cardId == "CS3_034" && plays.size >= 5) { // 织法者玛里苟斯
                                 continue
+                            }
+                            else if (card.cardId.startsWith("TTN_087")) { // 吸附寄生体
+                                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                                if (highCost == null) {
+                                    continue;
+                                }
+                                else {
+                                    card.action.power(highCost)
+                                }
                             }
                             else {
                                 card.action.power()

@@ -571,8 +571,8 @@ object DeckStrategyUtil {
     fun calcPowerOrder(cards: List<SimulateWeightCard>, oriTarget: Int): Pair<Double, List<SimulateWeightCard>> {
         // MYWEN
         // dp[j] 表示总 cost 为 j 时的最高 (cost + weight) 值
-        var luckCoin = cards.count { it.card.cardId == "GAME_005" }
-        var luckCoinList: MutableList<SimulateWeightCard> = cards.filter { it.card.cardId == "GAME_005" }.toMutableList()
+        var luckCoin = cards.count { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }
+        var luckCoinList: MutableList<SimulateWeightCard> = cards.filter { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }.toMutableList()
         var target = oriTarget + luckCoin
         val dp = DoubleArray(target + 1)
         val chosenCards = Array(target + 1) { mutableListOf<SimulateWeightCard>() }
@@ -591,15 +591,15 @@ object DeckStrategyUtil {
 
         // 处理 cost 为 0 的 Card
         if (target == 0) {
-            chosenCards[0] = cards.filter { it.card.cost == 0 && it.card.cardId != "GAME_005" }
+            chosenCards[0] = cards.filter { it.card.cost == 0 && it.card.cardId != "GAME_005" && it.card.cardId != "CORE_EX1_169" }
                 .sortedByDescending { it.weight }
                 .toMutableList()
         } else {
-            for (card in cards) {
-                if (card.card.cost == 0 && card.card.cardId != "GAME_005") {
+            for (it in cards) {
+                if (it.card.cost == 0 && it.card.cardId != "GAME_005" && it.card.cardId != "CORE_EX1_169") {
                     for (j in target downTo 0) {
                         if (dp[j] > 0) { // 当前总 cost 大于 0 时才选择 cost 为 0 的 Card
-                            chosenCards[j].add(card)
+                            chosenCards[j].add(it)
                         }
                     }
                 }
