@@ -88,7 +88,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     }
                                 }
                             }
-                            if (card.cardId == "TOY_508") {
+                            if (card.cardId == "TOY_508" ||
+                            card.cardId == "TTN_454") {
                                 card.action.power(rival.playArea.hero)
                             }
                             else if (card.cardId.startsWith("VAC_323") && toRivalList.size == 0) {
