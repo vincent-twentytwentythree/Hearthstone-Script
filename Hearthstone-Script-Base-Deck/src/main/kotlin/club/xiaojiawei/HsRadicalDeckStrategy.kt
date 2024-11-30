@@ -120,6 +120,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 }
                                 log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             }
+                            else if (card.cardId == "CS3_034" && plays.size >= 5) {
+                                continue
+                            }
                             else {
                                 card.action.power()
                             }
@@ -139,6 +142,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
             commonDeckStrategy.executeOutCard()
+
+            plays.filter{ playCard -> playCard.canAttack(false) }.forEach { playCard ->
+                var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+                tauntCard?.let {
+                    log.info { "card: $playCard, attack: $tauntCard" }
+                    playCard.action.attack(tauntCard)
+                }?:let {
+                    log.info { "card: $playCard, attackHero" }
+                    playCard.action.attackHero()
+                }
+            }
         }
     }
 
