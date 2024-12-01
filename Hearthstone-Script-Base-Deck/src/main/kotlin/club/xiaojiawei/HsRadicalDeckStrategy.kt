@@ -88,17 +88,39 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     }
                                 }
                             }
-                            if (card.cardId == "TOY_508" || //立体书
-                            card.cardId == "TTN_454" || //  殉船
-                            card.cardId == "CORE_AT_064" || // 怒袭
-                            card.cardId == "MIS_709" // 圣光荧光棒
+                            else if (
+                                card.cardId == "YOG_526" || //触须缠握
+                                card.cardId == "TOY_508" || //立体书
+                                card.cardId == "TTN_454" || //  殉船
+                                card.cardId == "CORE_AT_064" || // 怒袭
+                                card.cardId == "MIS_709" // 圣光荧光棒
                             ) {
                                 card.action.power(rival.playArea.hero)
                             }
-                            else if ( (card.cardId.startsWith("VAC_323") || // 麦芽岩浆
-                            card.cardId == "CORE_CS2_093") // 奉献
-                            && toRivalList.size == 0) {
+                            else if (
+                                card.cardId.startsWith("CORE_EX1_129") || // 刀扇
+                                card.cardId.startsWith("VAC_323") || // 麦芽岩浆
+                                card.cardId == "CORE_CS2_093" || // 奉献
+                                card.cardId == "VAC_414" || // 炽热火炭
+                                card.cardId == "ETC_069" // 渐强声浪
+                            && toRivalList.size <= 2) {
                                 continue;
+                            }
+                            else if (
+                            card.cardId == "CORE_SW_085" // 暗巷契约
+                            && hands.size <= 6) {
+                                continue;
+                            }
+                            else if (
+                            card.cardId.startsWith("VAC_951") // “健康”饮品
+                            ) { 
+                                var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                                if (highCost == null) {
+                                    continue;
+                                }
+                                else {
+                                    card.action.power(highCost)
+                                }
                             }
                             else if (card.cardId.startsWith("VAC_916")) { // 神圣佳酿
                                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
@@ -109,9 +131,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     card.action.power(highCost)
                                 }
                             }
-                            else if (card.cardId.startsWith("TTN_079")) { // 虫外有虫
+                            else if (
+                                card.cardId.startsWith("ETC_076") || // 街舞起跳
+                                card.cardId.startsWith("TTN_079") || // 星轨晕环
+                                card.cardId.startsWith("GDB_439")) { // 虫外有虫
                                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                                 if (highCost == null) {
+                                    continue;
+                                }
+                                else if (card.cardId.startsWith("ETC_076") && highCost.cost <= 4) { // 街舞起跳
                                     continue;
                                 }
                                 else {
@@ -145,10 +173,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 }
                                 log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             }
-                            else if (card.cardId == "CS3_034" && plays.size >= 5) { // 织法者玛里苟斯
+                            else if (card.cardId == "ETC_332" && plays.size <= 2 ) { // 梦中男神
                                 continue
                             }
-                            else if (card.cardId.startsWith("TTN_087")) { // 吸附寄生体
+                            else if (card.cardId == "CS3_034" && hands.size >= 5) { // 织法者玛里苟斯
+                                continue
+                            }
+                            else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
+                            card.cardId.startsWith("WORK_009") // 月度魔范员工
+                            ) { 
                                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                                 if (highCost == null) {
                                     continue;

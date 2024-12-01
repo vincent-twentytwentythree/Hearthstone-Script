@@ -97,6 +97,8 @@ class HsCommonDeckStrategy : DeckStrategy() {
     }
 
     override fun executeDiscoverChooseCard(vararg cards: Card): Int {
+        var highCost = -1;
+        var highIndex = 0;
         for ((index, card) in cards.withIndex()) {
             // MYWEN
             log.info { "card：" + card.toSimpleString() + " index: " + index }
@@ -106,7 +108,12 @@ class HsCommonDeckStrategy : DeckStrategy() {
             else if (card.cardId == "VAC_321t") {
                 return index
             }
+            if (card.cost > highCost) {
+                log.info { "card：" + card.toSimpleString() + " index: " + index }
+                highCost = card.cost
+                highIndex = index
+            }
         }
-        return 0
+        return highIndex
     }
 }
