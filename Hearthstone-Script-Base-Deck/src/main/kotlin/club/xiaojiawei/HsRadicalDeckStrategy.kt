@@ -140,6 +140,13 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
             else if (
+                card.cardId.startsWith("TOY_508") // 立体书
+            ) {
+                if (toRivalList.size <= 0) {
+                    return false;
+                }
+            }
+            else if (
             card.cardId == "CORE_SW_085" // 暗巷契约
             ) {
                 if (hands.size <= 6) {
