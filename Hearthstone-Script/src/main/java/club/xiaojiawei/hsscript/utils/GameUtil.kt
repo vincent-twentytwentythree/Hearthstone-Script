@@ -78,6 +78,15 @@ object GameUtil {
         GameRect(0.1656, 0.3106, -0.1702, 0.1160),
     )
 
+    private val TWO_DISCOVER_RECTS = arrayOf<GameRect>(
+        GameRect(-0.1570, -0.0149, -0.1702, 0.1160),
+        GameRect(0.0182, 0.1603, -0.1702, 0.1160),
+    )
+
+    private val ONE_DISCOVER_RECTS = arrayOf<GameRect>(
+        GameRect(-0.0666, 0.0741, -0.1702, 0.1160),
+    )
+
     private val MY_HAND_DECK_RECTS = arrayOf<Array<GameRect>>(
         arrayOf<GameRect>(
             GameRect(-0.0693, 0.0136, 0.3675, 0.5000),
@@ -201,6 +210,21 @@ object GameUtil {
 
     private var gameEndTasks: MutableList<ScheduledFuture<*>> = mutableListOf()
 
+    
+    fun getOneDiscoverCardRect(index: Int): GameRect {
+        if (index < 0 || index > ONE_DISCOVER_RECTS.size - 1) {
+            return GameRect.INVALID
+        }
+        return ONE_DISCOVER_RECTS[index]
+    }
+
+    fun getTwoDiscoverCardRect(index: Int): GameRect {
+        if (index < 0 || index > TWO_DISCOVER_RECTS.size - 1) {
+            return GameRect.INVALID
+        }
+        return TWO_DISCOVER_RECTS[index]
+    }
+
     fun getThreeDiscoverCardRect(index: Int): GameRect {
         if (index < 0 || index > THREE_DISCOVER_RECTS.size - 1) {
             return GameRect.INVALID
@@ -242,9 +266,16 @@ object GameUtil {
     }
 
     fun clickDiscover(index: Int, discoverSize: Int) {
-        if (discoverSize == 3) {
+        if (discoverSize == 1) {
+            getOneDiscoverCardRect(index).lClick()
+        }
+        else if (discoverSize == 2) {
+            getTwoDiscoverCardRect(index).lClick()
+        }
+        else if (discoverSize == 3) {
             getThreeDiscoverCardRect(index).lClick()
-        } else {
+        }
+        else {
             getFourDiscoverCardRect(index).lClick()
         }
     }
