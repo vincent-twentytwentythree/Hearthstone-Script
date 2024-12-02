@@ -79,8 +79,8 @@ object GameUtil {
     )
 
     private val TWO_DISCOVER_RECTS = arrayOf<GameRect>(
-        GameRect(-0.1570, -0.0149, -0.1702, 0.1160),
-        GameRect(0.0182, 0.1603, -0.1702, 0.1160),
+        GameRect(-0.3037, -0.1595, -0.1702, 0.1160),
+        GameRect(0.1656, 0.3106, -0.1702, 0.1160),
     )
 
     private val ONE_DISCOVER_RECTS = arrayOf<GameRect>(
