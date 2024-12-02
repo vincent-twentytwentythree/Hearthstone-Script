@@ -63,7 +63,7 @@ object GameUtil {
     val MY_HERO_RECT: GameRect = GameRect(-0.0453, 0.0488, 0.2229, 0.3494)
 
     val RIVAL_POWER_RECT: GameRect = GameRect(0.0840, 0.1554, -0.3260, -0.2338)
-    val MY_POWER_RECT: GameRect = GameRect(0.0855, 0.1569, 0.2254, 0.3176)
+    val MY_POWER_RECT: GameRect = GameRect(0.0855, 0.1569, 0.2439, 0.3361)
 
     private val FOUR_DISCOVER_RECTS = arrayOf<GameRect>(
         GameRect(-0.3332, -0.1911, -0.1702, 0.1160),

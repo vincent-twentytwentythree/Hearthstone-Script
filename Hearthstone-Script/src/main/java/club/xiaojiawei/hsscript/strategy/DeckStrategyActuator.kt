@@ -17,6 +17,9 @@ import club.xiaojiawei.status.War.player1
 import club.xiaojiawei.status.War.player2
 import kotlin.random.Random
 
+import club.xiaojiawei.hsscript.data.GAME_RECT
+import club.xiaojiawei.hsscript.data.GameRationConst
+
 /**
  * 卡牌策略抽象类
  * @author 肖嘉威
@@ -87,6 +90,16 @@ object DeckStrategyActuator {
 //        等待动画结束，畸变模式会导致开局动画增加
         SystemUtil.delay(20000 + (if (ConfigUtil.getBoolean(ConfigEnum.DISTORTION)) 4500 else 0))
         if (PauseStatus.isPause) return
+
+        val realH: Int = GAME_RECT.bottom - GAME_RECT.top
+        val usableH = realH
+        val realW: Int = GAME_RECT.right - GAME_RECT.left
+        val usableW = (realH * GameRationConst.GAME_WINDOW_ASPECT_TO_HEIGHT_RATIO).toInt()
+        val middleX = realW shr 1
+        val middleY = realH shr 1
+        log.info {"GAME_RECT.bottom:${GAME_RECT.bottom}, GAME_RECT.top:${GAME_RECT.top}, GAME_RECT.right:${GAME_RECT.right}, GAME_RECT.left:${GAME_RECT.left}"}
+        log.info {"realH: $realH, usableH: $usableH, realW: $realW, usableW: $usableW, middleX:$middleX, middleY:$middleY"}
+
         log.info { "执行换牌策略" }
         log.info { "1号玩家牌库数量：" + player1.deckArea.cards.size }
         log.info { "2号玩家牌库数量：" + player2.deckArea.cards.size }

@@ -10,9 +10,6 @@ import club.xiaojiawei.util.DeckStrategyUtil
 import club.xiaojiawei.util.isFalse
 import club.xiaojiawei.util.isTrue
 
-// import club.xiaojiawei.hsscript.data.GAME_RECT
-// import club.xiaojiawei.hsscript.data.GameRationConst
-
 /**
  * @author 肖嘉威
  * @date 2024/10/17 17:58
@@ -42,23 +39,14 @@ class HsRadicalDeckStrategy : DeckStrategy() {
     }
 
     override fun executeOutCard() {
-        // val realH: Int = GAME_RECT.bottom - GAME_RECT.top
-        // val usableH = realH
-        // val realW: Int = GAME_RECT.right - GAME_RECT.left
-        // val usableW = (realH * GameRationConst.GAME_WINDOW_ASPECT_TO_HEIGHT_RATIO).toInt()
-        // val middleX = realW shr 1
-        // val middleY = realH shr 1
-        // log.info {"GAME_RECT.bottom:${GAME_RECT.bottom}, GAME_RECT.top:${GAME_RECT.top}, GAME_RECT.right:${GAME_RECT.right}, GAME_RECT.left:${GAME_RECT.left}"}
-        // log.info {"realH: $realH, realW: $realW, usableW: $usableW, middleX:$middleX, middleY:$middleY"}
         if (War.me.isValid()){
             val me = War.me
             // MYWEN
             val rival = War.rival
             var plays = me.playArea.cards.toList()
             var toRivalList = War.rival.playArea.cards.toList()
-            var toMeList = War.me.playArea.cards.toList()
             log.info { "rival: $toRivalList" }
-            log.info { "me: $toMeList" }
+            log.info { "me: $plays" }
 //            使用地标
             plays.forEach {card->
                 if (card.cardType === CardTypeEnum.LOCATION && !card.isLocationActionCooldown){
@@ -119,7 +107,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 if (toRivalList.size <= 2) {
                                     continue;
                                 }
-                                else if (playCard.size <= 2 && card.cardId.startsWith("GDB_305")) {
+                                else if (plays.size <= 2 && card.cardId.startsWith("GDB_305")) {
                                     continue;
                                 }
                             }
