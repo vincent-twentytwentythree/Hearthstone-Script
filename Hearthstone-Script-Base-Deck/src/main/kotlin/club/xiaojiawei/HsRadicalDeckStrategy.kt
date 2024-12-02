@@ -132,7 +132,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "ETC_069" // 渐强声浪
                 || card.cardId == "CS2_032" // 烈焰风暴
             ) {
-                if (toRivalList.size <= 2) {
+                if (toRivalList.size <= 1) {
                     return false;
                 }
                 else if (plays.size <= 2 && card.cardId.startsWith("GDB_305")) {
