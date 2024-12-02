@@ -34,7 +34,11 @@ class HsCommonDeckStrategy : DeckStrategy() {
     }
 
     override fun executeChangeCard(cards: HashSet<Card>) {
-        cards.removeIf { card -> card.cost > 2 || card.cardId == "DEEP_008" }
+        cards.removeIf { 
+            card -> card.cost > 2
+            || card.cardId == "DEEP_008" // 针岩图腾
+            || card.cardId == "GDB_451" // 三角测量
+        }
     }
 
     override fun executeOutCard() {

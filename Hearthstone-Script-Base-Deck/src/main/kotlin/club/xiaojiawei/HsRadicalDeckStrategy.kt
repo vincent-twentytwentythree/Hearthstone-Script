@@ -147,6 +147,13 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
             else if (
+                card.cardId.startsWith("GDB_451") // 三角测量
+            ) {
+                if (me.usableResource <= 4) {
+                    return false;
+                }
+            }
+            else if (
             card.cardId == "CORE_SW_085" // 暗巷契约
             ) {
                 if (hands.size <= 6) {
@@ -240,6 +247,19 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "CS2_029" // 火球术
             ) {
                 card.action.power(rival.playArea.hero)
+            }
+            else if (
+                card.cardId.startsWith("GDB_305") // 阳炎耀斑
+                || card.cardId.startsWith("CORE_EX1_129") // 刀扇
+                || card.cardId.startsWith("VAC_323") // 麦芽岩浆
+                || card.cardId == "CORE_CS2_093" // 奉献
+                || card.cardId == "VAC_414" // 炽热火炭
+                || card.cardId == "ETC_069" // 渐强声浪
+                || card.cardId == "CS2_032" // 烈焰风暴
+            ) {
+                if (toRivalList.size <= 0) {
+                    return ;
+                }
             }
             else if (
                 card.cardId == "EX1_179" //冰刺
