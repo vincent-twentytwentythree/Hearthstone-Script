@@ -60,6 +60,7 @@ object DrawnInitCardPhaseStrategy : AbstractPhaseStrategy() {
             verifyPlayer(tagChangeEntity.playerId, true)
         } else if (tagChangeEntity.tag == TagEnum.NEXT_STEP && tagChangeEntity.value == StepEnum.BEGIN_MULLIGAN.name) {
             currentPhase = WarPhaseEnum.REPLACE_CARD
+            whoIsFirst()
             return true
         }
         return false
@@ -102,5 +103,22 @@ object DrawnInitCardPhaseStrategy : AbstractPhaseStrategy() {
             }
         }
         return false
+    }
+
+    private fun whoIsFirst() {
+        if (firstPlayerGameId != "firesnow#51434") {
+            rival.gameId = firstPlayerGameId
+            log.info { "对方游戏id：$firstPlayerGameId" }
+        } else {
+            me.gameId = firstPlayerGameId
+            log.info { "我方游戏id：$firstPlayerGameId" }
+        }
+        if (me.gameId == firstPlayerGameId
+            || (rival.gameId.isNotBlank() && rival.gameId != firstPlayerGameId)
+        ) {
+            currentPlayer = me
+        } else {
+            currentPlayer = rival
+        }
     }
 }

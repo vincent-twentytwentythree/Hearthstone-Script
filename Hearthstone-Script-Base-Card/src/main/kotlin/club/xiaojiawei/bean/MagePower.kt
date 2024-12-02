@@ -19,6 +19,7 @@ class MagePower : PointPower() {
             "TB_MagicalGuardians_Fireblast",
             "TUTR_HERO_08%bp",
             "VAN_HERO_08%bp",
+            "%Jaina%",
         )
     }
 

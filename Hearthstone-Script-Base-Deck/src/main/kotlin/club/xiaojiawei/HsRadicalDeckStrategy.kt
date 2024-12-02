@@ -86,38 +86,53 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                         playCard.action.attackHero()
                                     }
                                 }
+                                card.action.power()
                             }
                             else if (
-                                card.cardId == "GDB_456" || //自燃
-                                card.cardId == "YOG_526" || //触须缠握
-                                card.cardId == "TOY_508" || //立体书
-                                card.cardId == "TTN_454" || //  殉船
-                                card.cardId == "CORE_AT_064" || // 怒袭
-                                card.cardId == "MIS_709" // 圣光荧光棒
+                                card.cardId == "CS2_024" // 寒冰箭
+                                || card.cardId == "GDB_456" //自燃
+                                || card.cardId == "YOG_526" //触须缠握
+                                || card.cardId == "TOY_508" //立体书
+                                || card.cardId == "TTN_454" //  殉船
+                                || card.cardId == "CORE_AT_064" // 怒袭
+                                || card.cardId == "MIS_709" // 圣光荧光棒
+                                || card.cardId == "CS2_029" // 火球术
                             ) {
                                 card.action.power(rival.playArea.hero)
                             }
                             else if (
-                                card.cardId.startsWith("GDB_305") || // 阳炎耀斑
-                                card.cardId.startsWith("CORE_EX1_129") || // 刀扇
-                                card.cardId.startsWith("VAC_323") || // 麦芽岩浆
-                                card.cardId == "CORE_CS2_093" || // 奉献
-                                card.cardId == "VAC_414" || // 炽热火炭
-                                card.cardId == "ETC_069") { // 渐强声浪
+                                card.cardId.startsWith("GDB_305") // 阳炎耀斑
+                                || card.cardId.startsWith("CORE_EX1_129") // 刀扇
+                                || card.cardId.startsWith("VAC_323") // 麦芽岩浆
+                                || card.cardId == "CORE_CS2_093" // 奉献
+                                || card.cardId == "VAC_414" // 炽热火炭
+                                || card.cardId == "ETC_069" // 渐强声浪
+                                || card.cardId == "CS2_032" // 烈焰风暴
+                            ) {
                                 if (toRivalList.size <= 2) {
                                     continue;
                                 }
                                 else if (plays.size <= 2 && card.cardId.startsWith("GDB_305")) {
                                     continue;
                                 }
+                                else {
+                                    card.action.power()
+                                }
                             }
                             else if (
                             card.cardId == "CORE_SW_085" // 暗巷契约
-                            && hands.size <= 6) {
-                                continue;
+                            ) {
+                                if (hands.size <= 6) {
+                                    continue;
+                                }
+                                else {
+                                    card.action.power()
+                                }
                             }
                             else if (
-                            card.cardId.startsWith("VAC_951") // “健康”饮品
+                                card.cardId == "EX1_179" //冰刺
+                                || card.cardId.startsWith("VAC_951") // “健康”饮品
+                                || card.cardId.startsWith("CS2_022") // 变形术
                             ) { 
                                 var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                                 if (highCost == null) {
@@ -155,13 +170,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 card.action.power()
                             }
                         }
-                        else {
+                        else { //////////////////////////////////////////////////////////////////////////////////////非法术牌
                             if (me.playArea.isFull) break
                             // card.isBattlecry.isTrue {
                             if (card.cardId == "GDB_901") { // 极紫外破坏者
                                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
                                 var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
                                 var firstCard = rival.playArea.cards.firstOrNull()
+                                log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
+
                                 tauntCard?.let {
                                     card.action.power(it)
                                 }?:let {
@@ -171,18 +188,26 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                         firstCard?.let {
                                             card.action.power(it)
                                         }
-                                        ?:let{
-                                            card.action.power()
-                                        }
                                     }
                                 }
-                                log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, firstCard: $firstCard"}
                             }
-                            else if (card.cardId == "ETC_332" && plays.size <= 2 ) { // 梦中男神
-                                continue
+                            else if (card.cardId == "ETC_332" // 梦中男神
+                            || card.cardId == "SCH_311" // 活化扫帚
+                            ) {
+                                if (plays.size <= 2 ) { 
+                                    continue
+                                }
+                                else {
+                                    card.action.power()
+                                }
                             }
-                            else if (card.cardId == "CS3_034" && hands.size >= 5) { // 织法者玛里苟斯
-                                continue
+                            else if (card.cardId == "CS3_034") {
+                                if (hands.size >= 5) { // 织法者玛里苟斯
+                                    continue
+                                }
+                                else {
+                                    card.action.power()
+                                }
                             }
                             else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
                             card.cardId.startsWith("WORK_009") // 月度魔范员工
