@@ -180,6 +180,12 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
             }
+            else if (card.cardId == "DEEP_008" // 针岩图腾
+            ) {
+                if (plays.size <= 0 ) { 
+                    return false;
+                }
+            }
             else if (card.cardId == "ETC_332" // 梦中男神
             || card.cardId == "SCH_311" // 活化扫帚
             ) {

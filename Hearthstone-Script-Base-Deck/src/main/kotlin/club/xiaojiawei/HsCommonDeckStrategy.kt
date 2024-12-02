@@ -34,7 +34,7 @@ class HsCommonDeckStrategy : DeckStrategy() {
     }
 
     override fun executeChangeCard(cards: HashSet<Card>) {
-        cards.removeIf { card -> card.cost > 2 }
+        cards.removeIf { card -> card.cost > 2 || card.cardId == "DEEP_008" }
     }
 
     override fun executeOutCard() {
