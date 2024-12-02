@@ -10,6 +10,9 @@ import club.xiaojiawei.util.DeckStrategyUtil
 import club.xiaojiawei.util.isFalse
 import club.xiaojiawei.util.isTrue
 
+// import club.xiaojiawei.hsscript.data.GAME_RECT
+// import club.xiaojiawei.hsscript.data.GameRationConst
+
 /**
  * @author 肖嘉威
  * @date 2024/10/17 17:58
@@ -39,6 +42,14 @@ class HsRadicalDeckStrategy : DeckStrategy() {
     }
 
     override fun executeOutCard() {
+        // val realH: Int = GAME_RECT.bottom - GAME_RECT.top
+        // val usableH = realH
+        // val realW: Int = GAME_RECT.right - GAME_RECT.left
+        // val usableW = (realH * GameRationConst.GAME_WINDOW_ASPECT_TO_HEIGHT_RATIO).toInt()
+        // val middleX = realW shr 1
+        // val middleY = realH shr 1
+        // log.info {"GAME_RECT.bottom:${GAME_RECT.bottom}, GAME_RECT.top:${GAME_RECT.top}, GAME_RECT.right:${GAME_RECT.right}, GAME_RECT.left:${GAME_RECT.left}"}
+        // log.info {"realH: $realH, realW: $realW, usableW: $usableW, middleX:$middleX, middleY:$middleY"}
         if (War.me.isValid()){
             val me = War.me
             // MYWEN
@@ -89,6 +100,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 }
                             }
                             else if (
+                                card.cardId == "GDB_456" || //自燃
                                 card.cardId == "YOG_526" || //触须缠握
                                 card.cardId == "TOY_508" || //立体书
                                 card.cardId == "TTN_454" || //  殉船
@@ -98,13 +110,18 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                 card.action.power(rival.playArea.hero)
                             }
                             else if (
+                                card.cardId.startsWith("GDB_305") || // 阳炎耀斑
                                 card.cardId.startsWith("CORE_EX1_129") || // 刀扇
                                 card.cardId.startsWith("VAC_323") || // 麦芽岩浆
                                 card.cardId == "CORE_CS2_093" || // 奉献
                                 card.cardId == "VAC_414" || // 炽热火炭
-                                card.cardId == "ETC_069" // 渐强声浪
-                            && toRivalList.size <= 2) {
-                                continue;
+                                card.cardId == "ETC_069") { // 渐强声浪
+                                if (toRivalList.size <= 2) {
+                                    continue;
+                                }
+                                else if (playCard.size <= 2 && card.cardId.startsWith("GDB_305")) {
+                                    continue;
+                                }
                             }
                             else if (
                             card.cardId == "CORE_SW_085" // 暗巷契约
