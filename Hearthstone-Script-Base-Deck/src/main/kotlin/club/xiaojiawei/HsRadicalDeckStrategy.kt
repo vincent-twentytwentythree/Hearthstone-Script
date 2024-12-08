@@ -70,9 +70,18 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                     if (me.usableResource >= card.cost){
                         playCard(card)
+                        if (card.cardId == "CS3_034") {
+                            // Sleep for 2 seconds
+                            Thread.sleep(8000)
+                        }
+                        else {
+                            Thread.sleep(200)
+                        }
                     }
                 }
             }
+            // Sleep for 2 seconds
+            Thread.sleep(2000)
             plays = me.playArea.cards.toList()
 //            使用地标
             plays.forEach {card->
@@ -190,7 +199,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
                 var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
                 log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, cardSize: ${rival.playArea.cards.size}"}
-                if (tauntCard == null && canAttackCard == null && rival.playArea.cards.size == 0) {
+                if (tauntCard == null && canAttackCard == null && rival.playArea.cards.size != 0) {
                     return false;
                 }
             }
@@ -260,6 +269,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 if (toRivalList.size <= 0) {
                     return ;
                 }
+                else {
+                    card.action.power()
+                }
             }
             else if (
                 card.cardId == "EX1_179" //冰刺
@@ -314,6 +326,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     }?:let {
                         firstCard?.let {
                             card.action.power(it)
+                        }?:let {
+                            card.action.power()
                         }
                     }
                 }
