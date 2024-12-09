@@ -564,6 +564,18 @@ object DeckStrategyUtil {
         clean(myAtcWeight, rivalAtcWeight)
     }
 
+    fun calcPowerOrderConvert(cards: List<Card>, target: Int,
+        toRivalList: List<Card>, 
+        plays: List<Card>, 
+        hards: List<Card>
+    ): Pair<Double, List<SimulateWeightCard>> {
+        return calcPowerOrderBluteForce(cards, target,
+            toRivalList,
+            plays,
+            hards
+        )
+    }
+
     fun calcPowerOrderConvert(cards: List<Card>, target: Int): Pair<Double, List<SimulateWeightCard>> {
         return calcPowerOrder(convertToSimulateWeightCard(cards), target)
     }
@@ -617,6 +629,34 @@ object DeckStrategyUtil {
         return Pair(dp[choosenTarget], chosenCards[choosenTarget])
     }
 
+    fun calcPowerOrderBluteForce(cards: List<Card>, oriTarget: Int,
+        toRivalList: List<Card>, 
+        plays: List<Card>, 
+        hards: List<Card>
+    ): Pair<Double, List<SimulateWeightCard>> {
+
+        var allCombinations = getAllCombinations(cards)
+
+        var legalCombinations = allCombinations.filter { checkLegal(it, oriTarget) }
+
+        var maxValueCombination = legalCombinations.sortedWith(
+                compareBy<List<Card>> { getValue(it, toRivalList, plays, hards) }.thenBy { -it.size }
+            ).lastOrNull()
+        
+        if (maxValueCombination == null) {
+            return Pair(0.0, emptyList())
+        }
+        else {
+            var maxValue = getValue(maxValueCombination, toRivalList, plays, hards)
+            if (maxValue > 0) {
+                return Pair(0.0 + maxValue, convertToSimulateWeightCard(maxValueCombination))
+            }
+            else {
+                return Pair(0.0, emptyList())
+            }
+        }
+    }
+
 
     fun convertToSimulateWeightCard(cards: List<Card>): List<SimulateWeightCard> {
         val result = mutableListOf<SimulateWeightCard>()
@@ -631,6 +671,108 @@ object DeckStrategyUtil {
             t.powerWeight = CARD_WEIGHT_TRIE[t.card.cardId]?.powerWeight ?: 1.0
         }
         return cards.sortedByDescending { it.powerWeight }
+    }
+
+    fun getAllCombinations(input: List<Card>): List<List<Card>> {
+        if (input.isEmpty()) return listOf(emptyList())
+    
+        val head = input.first()
+        val tailCombinations = getAllCombinations(input.drop(1))
+    
+        return tailCombinations + tailCombinations.map { it + head }
+    }
+
+    fun checkLegal(input: List<Card>, cost: Int): Boolean {
+        var luckCoin = input.count { it.cardId == "GAME_005" || it.cardId == "CORE_EX1_169" }
+        return input.sumOf { it.cost } <= cost - luckCoin
+    }
+
+    fun getValue(
+        action: List<Card>,
+        toRivalList: List<Card>, 
+        plays: List<Card>, 
+        hards: List<Card>
+    ): Int {
+        var score = 0
+        var rivalNumOnBattlefield = toRivalList.count { it.cardType == CardTypeEnum.MINION }
+        var companionNumOnBattlefield = plays.size
+        var handsNum = hards.size
+        for (card in action) {
+            val cardId = card.cardId
+            when {
+                cardId.startsWith("VAC_323") -> { // 麦芽岩浆
+                    score += minOf(card.cost, rivalNumOnBattlefield)
+                }
+                cardId.startsWith("GDB_445") -> { // 陨石风暴
+                    score += card.cost + (rivalNumOnBattlefield - companionNumOnBattlefield)
+                }
+                cardId.startsWith("GDB_320") -> { // 艾瑞达蛮兵 有时候会减费，hard code
+                    score += 7
+                }
+                else -> {
+                    score += card.cost
+                }
+            }
+        }
+    
+        // 法强+1
+        val powerPlusCount = action.count { 
+            (it.cardId == "GDB_310") or (it.cardId == "CS3_007")
+        } + plays.count { 
+            (it.cardId == "GDB_310") or (it.cardId == "CS3_007") or (it.cardId == "CS2_052")
+        }
+    
+        for (card in action) {
+            val cardId = card.cardId
+            when {
+                cardId == "TOY_508" -> { // 立体书
+                    score += powerPlusCount
+                }
+                cardId.startsWith("VAC_323") -> { // 麦芽岩浆
+                    score += powerPlusCount * rivalNumOnBattlefield
+                }
+                cardId.startsWith("GDB_445") -> { // 陨石风暴
+                    score += powerPlusCount * (rivalNumOnBattlefield - companionNumOnBattlefield)
+                }
+            }
+        }
+    
+        // 法术迸发
+        val spellCount = action.count { // 有什么硬币需要跳币，不能出发法术迸发，不想修了todo
+            it.cardType == CardTypeEnum.SPELL
+        }
+    
+        for (card in action) {
+            val cardId = card.cardId
+            when {
+                cardId == "GDB_434" && spellCount > 0 -> { // 流彩巨岩
+                    score += 3
+                }
+                cardId == "GDB_310" && spellCount > 0 -> { // 虚灵神谕者
+                    score += 2
+                }
+            }
+        }
+    
+        // 其他特殊效果
+        for (card in action) {
+            val cardId = card.cardId
+            when (cardId) {
+                "CS3_034" -> { // 织法者玛里苟斯
+                    score += 10 - (handsNum - action.size)
+                }
+                "VAC_321" -> { // 伊辛迪奥斯
+                    score += 5 * 2
+                }
+                "GDB_901" -> { // 极紫外破坏者
+                    if (rivalNumOnBattlefield > 0) {
+                        score += 1
+                    }
+                }
+            }
+        }
+    
+        return score
     }
 
 }

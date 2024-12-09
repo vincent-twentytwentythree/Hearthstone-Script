@@ -61,7 +61,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
 
             var handsToPlay = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurn(it) }.toList()
-            val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
+            // val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
+            val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands)
             if (resultCards.isNotEmpty()) {
                 val sortCard = DeckStrategyUtil.sortCard(resultCards)
                 log.info { "待出牌：$sortCard" }
@@ -99,8 +100,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList()
-        var hands = me.handArea.cards.toList()
         plays.filter{ playCard -> playCard.canAttack(false) }.forEach { playCard ->
             var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
             tauntCard?.let {
@@ -141,17 +140,14 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "ETC_069" // 渐强声浪
                 || card.cardId == "CS2_032" // 烈焰风暴
             ) {
-                if (toRivalList.size <= 1) {
-                    return false;
-                }
-                else if (plays.size <= 2 && card.cardId.startsWith("GDB_305")) {
+                if (toRivalList.size <= 0) {
                     return false;
                 }
             }
             else if (
                 card.cardId.startsWith("TOY_508") // 立体书
             ) {
-                if (toRivalList.size <= 0) {
+                if (me.usableResource <= 2) {
                     return false;
                 }
             }
@@ -197,9 +193,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
-                log.info { "tauntCard: $tauntCard, canAttackCard: $canAttackCard, cardSize: ${rival.playArea.cards.size}"}
-                if (tauntCard == null && canAttackCard == null && rival.playArea.cards.size != 0) {
+                var canBeAttacked = rival.playArea.cards.filter { card-> card.canBeAttacked() }.sortedBy { card.cost }.lastOrNull()
+                log.info { "tauntCard: $tauntCard, canBeAttacked: $canBeAttacked, cardSize: ${rival.playArea.cards.size}"}
+                if (tauntCard == null && canBeAttacked == null && rival.playArea.cards.size != 0) {
                     return false;
                 }
             }
@@ -238,7 +234,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val rival = War.rival
         var plays = me.playArea.cards.toList()
         var toRivalList = War.rival.playArea.cards.toList()
-        var hands = me.handArea.cards.toList()
         if (card.cardType === CardTypeEnum.SPELL) {
             if (card.cardId == "GDB_445") { // 陨石风暴
                 log.info { "start storm, ${plays}" }
@@ -316,12 +311,12 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                var canAttackCard = rival.playArea.cards.filter { card-> card.canAttack() }.sortedBy { card.cost }.lastOrNull()
+                var canBeAttacked = rival.playArea.cards.filter { card-> card.canBeAttacked() }.sortedBy { card.cost }.lastOrNull()
                 var firstCard = rival.playArea.cards.firstOrNull()
                 tauntCard?.let {
                     card.action.power(it)
                 }?:let {
-                    canAttackCard?.let {
+                    canBeAttacked?.let {
                         card.action.power(it)
                     }?:let {
                         firstCard?.let {
