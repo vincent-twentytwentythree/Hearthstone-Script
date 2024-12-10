@@ -637,7 +637,7 @@ object DeckStrategyUtil {
 
         var allCombinations = getAllCombinations(cards)
 
-        var legalCombinations = allCombinations.filter { checkLegal(it, oriTarget) }
+        var legalCombinations = allCombinations.filter { checkLegal(it, oriTarget, toRivalList, plays, hards) }
 
         var maxValueCombination = legalCombinations.sortedWith(
                 compareBy<List<Card>> { getValue(it, toRivalList, plays, hards) }.thenBy { -it.size }
@@ -682,9 +682,14 @@ object DeckStrategyUtil {
         return tailCombinations + tailCombinations.map { it + head }
     }
 
-    fun checkLegal(input: List<Card>, cost: Int): Boolean {
+    fun checkLegal(input: List<Card>, cost: Int,
+        toRivalList: List<Card>, 
+        plays: List<Card>, 
+        hards: List<Card>
+    ): Boolean {
         var luckCoin = input.count { it.cardId == "GAME_005" || it.cardId == "CORE_EX1_169" }
-        return input.sumOf { it.cost } <= cost - luckCoin
+        var minionCount = input.count { it.cardType == CardTypeEnum.MINION } + plays.count { it.cardType == CardTypeEnum.MINION }
+        return (input.sumOf { it.cost } <= cost - luckCoin) && (minionCount <= 7)
     }
 
     fun getValue(
