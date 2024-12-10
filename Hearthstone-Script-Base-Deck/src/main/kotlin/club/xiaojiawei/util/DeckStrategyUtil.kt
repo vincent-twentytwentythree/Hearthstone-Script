@@ -716,11 +716,12 @@ object DeckStrategyUtil {
         }
     
         // 法强+1
-        val powerPlusCount = action.count { 
-            (it.cardId == "GDB_310") or (it.cardId == "CS3_007")
-        } + plays.count { 
+        val powerPlusOnBattleField = plays.count { 
             (it.cardId == "GDB_310") or (it.cardId == "CS3_007") or (it.cardId == "CS2_052")
         }
+        val powerPlusCount = action.count { 
+            (it.cardId == "GDB_310") or (it.cardId == "CS3_007")
+        } + powerPlusOnBattleField
     
         for (card in action) {
             val cardId = card.cardId
@@ -732,24 +733,24 @@ object DeckStrategyUtil {
                     score += powerPlusCount * rivalNumOnBattlefield
                 }
                 cardId.startsWith("GDB_445") -> { // 陨石风暴
-                    score += powerPlusCount * (rivalNumOnBattlefield - companionNumOnBattlefield)
+                    score += powerPlusOnBattleField * (rivalNumOnBattlefield - companionNumOnBattlefield)
                 }
             }
         }
     
         // 法术迸发
         val spellCount = action.count { // 有什么硬币需要跳币，不能出发法术迸发，不想修了todo
-            it.cardType == CardTypeEnum.SPELL
+            it.cardType == CardTypeEnum.SPELL && it.cardId != "GAME_005"
         }
     
         for (card in action) {
             val cardId = card.cardId
             when {
                 cardId == "GDB_434" && spellCount > 0 -> { // 流彩巨岩
-                    score += 3
+                    score += 3 * spellCount
                 }
                 cardId == "GDB_310" && spellCount > 0 -> { // 虚灵神谕者
-                    score += 2
+                    score += 2 * spellCount
                 }
             }
         }
