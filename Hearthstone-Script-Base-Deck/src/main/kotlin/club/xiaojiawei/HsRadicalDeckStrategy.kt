@@ -53,8 +53,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             var plays = me.playArea.cards.toList()
             var toRivalList = War.rival.playArea.cards.toList()
             var hands = me.handArea.cards.toList()
+            log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
             minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
-            log.info { "minionNeededToBurst: $minionNeededToBurst" }
+            log.info { "after filter minionNeededToBurst: $minionNeededToBurst" }
             log.info { "rival: $toRivalList" }
             log.info { "me: $plays" }
 //            使用地标
