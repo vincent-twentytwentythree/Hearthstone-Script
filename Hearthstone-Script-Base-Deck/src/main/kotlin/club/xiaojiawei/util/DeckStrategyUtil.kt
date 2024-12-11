@@ -685,14 +685,14 @@ object DeckStrategyUtil {
         return tailCombinations + tailCombinations.map { it + head }
     }
 
-    fun checkLegal(input: List<Card>, cost: Int,
+    fun checkLegal(input: List<Card>, target: Int,
         toRivalList: List<Card>, 
         plays: List<Card>, 
         hards: List<Card>
     ): Boolean {
         var luckCoin = input.count { it.cardId == "GAME_005" || it.cardId == "CORE_EX1_169" }
         var minionCount = input.count { it.cardType == CardTypeEnum.MINION } + plays.count { it.cardType == CardTypeEnum.MINION }
-        return (input.sumOf { it.cost } <= cost - luckCoin) && (minionCount <= 7)
+        return (input.sumOf { it.cost } <= target + luckCoin) && (minionCount <= 7)
     }
 
     fun getValue(
