@@ -51,7 +51,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             val me = War.me
             val rival = War.rival
             var plays = me.playArea.cards.toList()
-            var toRivalList = War.rival.playArea.cards.toList()
+            var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
             var hands = me.handArea.cards.toList()
             log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
             minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
@@ -139,7 +139,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList()
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
         var hands = me.handArea.cards.toList()
         if (card.cardType === CardTypeEnum.SPELL){
             if (card.cardId == "GDB_445") { // 陨石风暴
@@ -252,7 +252,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList()
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
         if (card.cardType === CardTypeEnum.SPELL) {
             if (card.cardId == "GDB_445") { // 陨石风暴
                 log.info { "start storm, ${plays}" }
