@@ -103,6 +103,7 @@ class HsCommonDeckStrategy : DeckStrategy() {
     override fun executeDiscoverChooseCard(vararg cards: Card): Int {
         var highCost = -1;
         var highIndex = 0;
+        Thread.sleep(300)
         for ((index, card) in cards.withIndex()) {
             // MYWEN
             log.info { "card：" + card.toSimpleString() + " index: " + index }

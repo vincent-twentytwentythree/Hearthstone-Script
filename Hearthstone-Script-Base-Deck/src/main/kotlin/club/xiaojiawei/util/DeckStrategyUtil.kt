@@ -567,12 +567,14 @@ object DeckStrategyUtil {
     fun calcPowerOrderConvert(cards: List<Card>, target: Int,
         toRivalList: List<Card>, 
         plays: List<Card>, 
-        hards: List<Card>
+        hards: List<Card>,
+        minionNeededToBurst: ArrayList<Card>
     ): Pair<Double, List<SimulateWeightCard>> {
         return calcPowerOrderBluteForce(cards, target,
             toRivalList,
             plays,
-            hards
+            hards,
+            minionNeededToBurst
         )
     }
 
@@ -632,7 +634,8 @@ object DeckStrategyUtil {
     fun calcPowerOrderBluteForce(cards: List<Card>, oriTarget: Int,
         toRivalList: List<Card>, 
         plays: List<Card>, 
-        hards: List<Card>
+        hards: List<Card>,
+        minionNeededToBurst: ArrayList<Card>
     ): Pair<Double, List<SimulateWeightCard>> {
 
         var allCombinations = getAllCombinations(cards)
@@ -640,14 +643,14 @@ object DeckStrategyUtil {
         var legalCombinations = allCombinations.filter { checkLegal(it, oriTarget, toRivalList, plays, hards) }
 
         var maxValueCombination = legalCombinations.sortedWith(
-                compareBy<List<Card>> { getValue(it, toRivalList, plays, hards) }.thenBy { -it.size }
+                compareBy<List<Card>> { getValue(it, toRivalList, plays, hards, minionNeededToBurst) }.thenBy { -it.size }
             ).lastOrNull()
         
         if (maxValueCombination == null) {
             return Pair(0.0, emptyList())
         }
         else {
-            var maxValue = getValue(maxValueCombination, toRivalList, plays, hards)
+            var maxValue = getValue(maxValueCombination, toRivalList, plays, hards, minionNeededToBurst)
             if (maxValue > 0) {
                 return Pair(0.0 + maxValue, convertToSimulateWeightCard(maxValueCombination))
             }
@@ -696,7 +699,8 @@ object DeckStrategyUtil {
         action: List<Card>,
         toRivalList: List<Card>, 
         plays: List<Card>, 
-        hards: List<Card>
+        hards: List<Card>,
+        minionNeededToBurst: ArrayList<Card>
     ): Int {
         var score = 0
         var rivalNumOnBattlefield = toRivalList.count { it.cardType == CardTypeEnum.MINION }
@@ -724,7 +728,7 @@ object DeckStrategyUtil {
         val powerPlusOnBattleField = plays.count { 
             (it.cardId == "GDB_310") or (it.cardId == "CS3_007") or (it.cardId == "CS2_052")
         }
-        val powerPlusCount = action.count { 
+        val powerPlusCount = action.count {
             (it.cardId == "GDB_310") or (it.cardId == "CS3_007")
         } + powerPlusOnBattleField
     
@@ -744,18 +748,26 @@ object DeckStrategyUtil {
         }
     
         // 法术迸发
-        val spellCount = action.count { // 有什么硬币需要跳币，不能出发法术迸发，不想修了todo
-            it.cardType == CardTypeEnum.SPELL && it.cardId != "GAME_005"
+        val whetherSpell = action.count {
+            it.cardType == CardTypeEnum.SPELL
+        } > 0
+
+        if (whetherSpell) {
+            score += minionNeededToBurst.size * 2 // hard code
+        }
+
+        val spellCount = action.count { // 有情况硬币需要跳币，不能触发法术迸发，不想修了todo
+            it.cardType == CardTypeEnum.SPELL && it.cardId != "GAME_005" && it.cardId != "GDB_445"
         }
     
         for (card in action) {
             val cardId = card.cardId
             when {
                 cardId == "GDB_434" && spellCount > 0 -> { // 流彩巨岩
-                    score += 3 * spellCount
+                    score += 3
                 }
                 cardId == "GDB_310" && spellCount > 0 -> { // 虚灵神谕者
-                    score += 2 * spellCount
+                    score += 2
                 }
             }
         }

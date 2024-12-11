@@ -38,6 +38,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         commonDeckStrategy.executeChangeCard(cards)
     }
 
+    private val minionNeededToBurst: ArrayList<Card> = arrayListOf()
+
     // MYWEN
     override fun executeOutCard() {
         if (War.me.isValid()){
@@ -51,6 +53,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             var plays = me.playArea.cards.toList()
             var toRivalList = War.rival.playArea.cards.toList()
             var hands = me.handArea.cards.toList()
+            minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
             log.info { "rival: $toRivalList" }
             log.info { "me: $plays" }
 //            使用地标
@@ -62,7 +65,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
             var handsToPlay = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurn(it) }.toList()
             // val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
-            val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands)
+            val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands, minionNeededToBurst)
             if (resultCards.isNotEmpty()) {
                 val sortCard = DeckStrategyUtil.sortCard(resultCards)
                 log.info { "待出牌：$sortCard" }
@@ -70,13 +73,27 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     val card = simulateWeightCard.card
                     log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                     if (me.usableResource >= card.cost){
-                        playCard(card)
-                        if (card.cardId == "CS3_034") {
-                            // Sleep for 2 seconds
-                            Thread.sleep(8000)
-                        }
-                        else {
-                            Thread.sleep(200)
+                        var succ = playCard(card)
+                        if (succ == true) {
+                            if (card.cardId == "CS3_034") {
+                                // Sleep for 8 seconds
+                                Thread.sleep(8000)
+                            }
+                            else if (card.cardId == "GDB_445") { // 陨石风暴
+                                // Sleep for 2 seconds
+                                Thread.sleep(2000)
+                            }
+                            else {
+                                Thread.sleep(200)
+                            }
+                            if (card.cardId == "GDB_434" // 流彩巨岩
+                                || card.cardId == "GDB_310" // 虚灵神谕者
+                            ) {
+                                minionNeededToBurst.add(card)
+                            }
+                            if (card.cardType == CardTypeEnum.SPELL ) {
+                                minionNeededToBurst.clear()
+                            }
                         }
                     }
                 }
@@ -229,7 +246,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         return true;
     }
 
-    private fun playCard(card: Card) {
+    private fun playCard(card: Card): Boolean {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
@@ -262,7 +279,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "CS2_032" // 烈焰风暴
             ) {
                 if (toRivalList.size <= 0) {
-                    return ;
+                    return false;
                 }
                 else {
                     card.action.power()
@@ -275,7 +292,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             ) { 
                 var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
-                    return;
+                    return false;
                 }
                 else {
                     card.action.power(highCost)
@@ -296,7 +313,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.cardId.startsWith("GDB_439")) { // 虫外有虫
                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
-                    return;
+                    return false;
                 }
                 else {
                     card.action.power(highCost)
@@ -307,7 +324,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
         }
         else { //////////////////////////////////////////////////////////////////////////////////////非法术牌
-            if (me.playArea.isFull) return;
+            if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
@@ -332,7 +349,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             ) {
                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
-                    return;
+                    return false;
                 }
                 else {
                     card.action.power(highCost)
@@ -342,5 +359,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.action.power()
             }
         }
+        return true
     }
 }
