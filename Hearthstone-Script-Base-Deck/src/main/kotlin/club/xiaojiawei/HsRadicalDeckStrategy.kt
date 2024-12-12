@@ -1,6 +1,8 @@
 package club.xiaojiawei
 
 import club.xiaojiawei.bean.Card
+import club.xiaojiawei.bean.PredictActionRequest
+import club.xiaojiawei.bean.PredictActionResponse
 import club.xiaojiawei.bean.isValid
 import club.xiaojiawei.config.log
 import club.xiaojiawei.enums.CardTypeEnum
@@ -9,6 +11,18 @@ import club.xiaojiawei.status.War
 import club.xiaojiawei.util.DeckStrategyUtil
 import club.xiaojiawei.util.isFalse
 import club.xiaojiawei.util.isTrue
+
+import java.net.HttpURLConnection
+import java.net.URL
+import java.io.OutputStream
+import java.io.InputStreamReader
+import java.io.BufferedReader
+
+import java.net.SocketException
+
+import com.google.gson.Gson
+
+import club.xiaojiawei.status.War.firstPlayerGameId
 
 /**
  * @author 肖嘉威
@@ -38,7 +52,62 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         commonDeckStrategy.executeChangeCard(cards)
     }
 
+    override fun reset() {
+        super.reset()
+        minionNeededToBurst.clear()
+        playedActions.clear()
+    }
+
+    // how to clean MYWEN
     private val minionNeededToBurst: ArrayList<Card> = arrayListOf()
+    private val playedActions: ArrayList<ArrayList<Card>> = arrayListOf()
+
+    fun convertToJson(predictActionRequest: PredictActionRequest): String {
+        val gson = Gson()
+        return gson.toJson(predictActionRequest)
+    }
+
+    fun loadJson(jsonString: String): PredictActionResponse {
+        val gson = Gson()
+        return gson.fromJson(jsonString, PredictActionResponse::class.java)
+    }
+
+    fun sendPostRequest(predictActionRequest: PredictActionRequest): PredictActionResponse {
+        try {
+            var jsonData = convertToJson(predictActionRequest)
+            val url = URL("http://localhost:8000")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.doOutput = true
+        
+            // Write JSON data to the output stream
+            connection.outputStream.use { os ->
+                val input = jsonData.toByteArray(Charsets.UTF_8)
+                os.write(input, 0, input.size)
+            }
+        
+            // Read the response
+            val responseCode = connection.responseCode
+            println("Response Code: $responseCode")
+        
+            val response = StringBuilder()
+            BufferedReader(InputStreamReader(connection.inputStream)).use { reader ->
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    response.append(line)
+                }
+            }
+            return loadJson(response.toString())
+        } catch (e: SocketException) {
+            // Handle the specific SocketException
+            log.info { "SocketException occurred: ${e.message}" }
+        } catch (e: Exception) {
+            // Handle other exceptions
+            log.info { "An error occurred: ${e.message}" }
+        }
+        return PredictActionResponse("fail", arrayListOf(), "fail")
+    }
 
     // MYWEN
     override fun executeOutCard() {
@@ -64,19 +133,34 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     card.action.lClick()
                 }
             }
+            var position = "landlord"
+            if (firstPlayerGameId == "firesnow#51434") { // 先手
+                position = "pk_dp"
+            }
+            var predictActionRequest = PredictActionRequest(position,
+                                                            me.usableResource,
+                                                            hands.map { it.cardId } ,
+                                                            arrayListOf(),
+                                                            playedActions.map { it.map{ card -> card.cardId } },
+                                                            toRivalList.map { it.cardId },
+                                                            plays.map { it.cardId },
+                                                            minionNeededToBurst.map { it.cardId }
+                                                            )
+            var predictActionResponse = sendPostRequest(predictActionRequest)
+            val playedCard: ArrayList<Card> = arrayListOf()
+            if (predictActionResponse.status == "succ") {
 
-            var handsToPlay = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurn(it) }.toList()
-            // val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
-            val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands, minionNeededToBurst)
-            if (resultCards.isNotEmpty()) {
-                val sortCard = DeckStrategyUtil.sortCard(resultCards)
-                log.info { "待出牌：$sortCard" }
-                for (simulateWeightCard in sortCard) {
-                    val card = simulateWeightCard.card
+                log.info { "待出牌：${predictActionResponse.action}" }
+                for (cardId in predictActionResponse.action) {
+                    val card = hands.filter { it.cardId == cardId }.firstOrNull()
+                    if (card == null) {
+                        continue
+                    }
                     log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                     if (me.usableResource >= card.cost){
                         var succ = playCard(card)
                         if (succ == true) {
+                            playedCard.add(card)
                             if (card.cardId == "CS3_034") {
                                 // Sleep for 8 seconds
                                 Thread.sleep(8000)
@@ -100,6 +184,47 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     }
                 }
             }
+            else {
+                var handsToPlay = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurn(it) }.toList()
+                // val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
+                val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands, minionNeededToBurst)
+                if (resultCards.isNotEmpty()) {
+                    val sortCard = DeckStrategyUtil.sortCard(resultCards)
+                    log.info { "待出牌：$sortCard" }
+                    for (simulateWeightCard in sortCard) {
+                        val card = simulateWeightCard.card
+                        log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
+                        if (me.usableResource >= card.cost){
+                            var succ = playCard(card)
+                            if (succ == true) {
+                                playedCard.add(card)
+                                if (card.cardId == "CS3_034") {
+                                    // Sleep for 8 seconds
+                                    Thread.sleep(8000)
+                                }
+                                else if (card.cardId == "GDB_445") { // 陨石风暴
+                                    // Sleep for 2 seconds
+                                    Thread.sleep(2000)
+                                }
+                                else {
+                                    Thread.sleep(200)
+                                }
+                                if (card.cardId == "GDB_434" // 流彩巨岩
+                                    || card.cardId == "GDB_310" // 虚灵神谕者
+                                ) {
+                                    minionNeededToBurst.add(card)
+                                }
+                                if (card.cardType == CardTypeEnum.SPELL ) {
+                                    minionNeededToBurst.clear()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            playedActions.add(playedCard)
+
             // Sleep for 2 seconds
             Thread.sleep(2000)
             plays = me.playArea.cards.toList()

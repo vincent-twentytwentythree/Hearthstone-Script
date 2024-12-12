@@ -71,17 +71,17 @@ class HsCommonDeckStrategy : DeckStrategy() {
             myHandCardsCopy, me.usableResource
         )
 
-        val coinCard = findCoin(myHandCards)
-        if (coinCard != null) {
-            val (num1, resultCards1) = DeckStrategyUtil.calcPowerOrderConvert(
-                myHandCardsCopy, me.usableResource + 1
-            )
-            if (num1 > me.usableResource) {
-                coinCard.action.power()
-                outCard(resultCards1)
-                return
-            }
-        }
+        // val coinCard = findCoin(myHandCards)
+        // if (coinCard != null) {
+        //     val (num1, resultCards1) = DeckStrategyUtil.calcPowerOrderConvert(
+        //         myHandCardsCopy, me.usableResource + 1
+        //     )
+        //     if (num1 > me.usableResource) {
+        //         coinCard.action.power()
+        //         outCard(resultCards1)
+        //         return
+        //     }
+        // }
         outCard(resultCards)
     }
 
