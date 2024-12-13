@@ -106,7 +106,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), "fail")
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail")
     }
 
     // MYWEN
@@ -114,7 +114,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         if (War.me.isValid()){
             if (War.me.playArea.isFull) {
                 log.info { "playArea is full, clean it first" }
-                attackForAllCardsInPlayArea()
+                DeckStrategyUtil.cleanPlay()
             }
 
             val me = War.me
@@ -135,11 +135,16 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
             var position = "landlord"
             if (firstPlayerGameId == "firesnow#51434") { // 先手
-                position = "pk_dp"
+                position = "landlord"
             }
+            else {
+                position = "second_hand"
+            }
+
+            var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toList()
             var predictActionRequest = PredictActionRequest(position,
                                                             me.usableResource,
-                                                            hands.map { it.cardId } ,
+                                                            handsToPlaySimple.map { it.cardId } ,
                                                             arrayListOf(),
                                                             playedActions.map { it.map{ card -> card.cardId } },
                                                             toRivalList.map { it.cardId },
@@ -150,7 +155,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             val playedCard: ArrayList<Card> = arrayListOf()
             if (predictActionResponse.status == "succ") {
 
-                log.info { "待出牌：${predictActionResponse.action}" }
+                log.info { "待出牌：${predictActionResponse}" }
                 for (cardId in predictActionResponse.action) {
                     val card = hands.filter { it.cardId == cardId }.firstOrNull()
                     if (card == null) {
@@ -161,25 +166,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         var succ = playCard(card)
                         if (succ == true) {
                             playedCard.add(card)
-                            if (card.cardId == "CS3_034") {
-                                // Sleep for 8 seconds
-                                Thread.sleep(8000)
-                            }
-                            else if (card.cardId == "GDB_445") { // 陨石风暴
-                                // Sleep for 2 seconds
-                                Thread.sleep(2000)
-                            }
-                            else {
-                                Thread.sleep(200)
-                            }
-                            if (card.cardId == "GDB_434" // 流彩巨岩
-                                || card.cardId == "GDB_310" // 虚灵神谕者
-                            ) {
-                                minionNeededToBurst.add(card)
-                            }
-                            if (card.cardType == CardTypeEnum.SPELL ) {
-                                minionNeededToBurst.clear()
-                            }
+                            waitForUI(card)
                         }
                     }
                 }
@@ -198,25 +185,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             var succ = playCard(card)
                             if (succ == true) {
                                 playedCard.add(card)
-                                if (card.cardId == "CS3_034") {
-                                    // Sleep for 8 seconds
-                                    Thread.sleep(8000)
-                                }
-                                else if (card.cardId == "GDB_445") { // 陨石风暴
-                                    // Sleep for 2 seconds
-                                    Thread.sleep(2000)
-                                }
-                                else {
-                                    Thread.sleep(200)
-                                }
-                                if (card.cardId == "GDB_434" // 流彩巨岩
-                                    || card.cardId == "GDB_310" // 虚灵神谕者
-                                ) {
-                                    minionNeededToBurst.add(card)
-                                }
-                                if (card.cardType == CardTypeEnum.SPELL ) {
-                                    minionNeededToBurst.clear()
-                                }
+                                waitForUI(card)
                             }
                         }
                     }
@@ -240,6 +209,33 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         }
     }
 
+    private fun waitForUI(card: Card) {
+        val me = War.me
+        var hands = me.handArea.cards.toList()
+
+        if (card.cardId == "CS3_034") { // 织法者玛里苟斯
+            Thread.sleep(2500L * (10 - hands.size + 1))
+        }
+        else if (card.cardId == "GDB_445") { // 陨石风暴
+            // Sleep for 2 seconds
+            Thread.sleep(2500L)
+        }
+        else {
+            Thread.sleep(500L)
+        }
+        if (card.cardId == "GDB_434" // 流彩巨岩
+            || card.cardId == "GDB_310" // 虚灵神谕者
+        ) {
+            minionNeededToBurst.add(card)
+        }
+        if (card.cardType == CardTypeEnum.SPELL ) {
+            if (minionNeededToBurst.size > 0) {
+                Thread.sleep(3000L * minionNeededToBurst.size)
+            }
+            minionNeededToBurst.clear()
+        }
+    }
+
     private fun attackForAllCardsInPlayArea() {
         val me = War.me
         val rival = War.rival
@@ -258,6 +254,26 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
     override fun executeDiscoverChooseCard(vararg cards: Card): Int {
         return commonDeckStrategy.executeDiscoverChooseCard(*cards)
+    }
+
+    private fun checkWhetherCanBeUsedThisTurnSimple (card: Card): Boolean {
+        val me = War.me
+        val rival = War.rival
+        var plays = me.playArea.cards.toList()
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
+        var hands = me.handArea.cards.toList()
+        if (card.cardType === CardTypeEnum.SPELL){
+            return true
+        }
+        else { //////////////////////////////////////////////////////////////////////////////////////非法术牌
+            if (me.playArea.isFull) return false;
+            if (card.cardId == "CS3_034") { // 织法者玛里苟斯
+                if (hands.size >= 5) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private fun checkWhetherCanBeUsedThisTurn (card: Card): Boolean {
@@ -356,8 +372,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
             }
-            else if (card.cardId == "CS3_034") {
-                if (hands.size >= 5) { // 织法者玛里苟斯
+            else if (card.cardId == "CS3_034") { // 织法者玛里苟斯
+                if (hands.size >= 5) {
                     return false;
                 }
             }
@@ -405,7 +421,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "ETC_069" // 渐强声浪
                 || card.cardId == "CS2_032" // 烈焰风暴
             ) {
-                if (toRivalList.size <= 0) {
+                if (toRivalList.size <= 0 && minionNeededToBurst.size == 0) {
                     return false;
                 }
                 else {
