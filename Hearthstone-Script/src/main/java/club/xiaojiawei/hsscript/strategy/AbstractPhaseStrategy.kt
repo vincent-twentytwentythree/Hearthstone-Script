@@ -63,7 +63,7 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                     SystemUtil.delay(1000)
                     if (accessFile.length() <= mark && me.isValid()) {
                         val cards: List<Card> = me.setasideArea.cards.toMutableList()
-                        log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
+                        // log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
                         if (cards.size > 0 && lastDiscoverEntityId != cards.last().entityId && cards.last().zonePos != null) {
                             val discoveryCards: MutableList<Card> = mutableListOf()
                             for (card in cards.reversed()) {
