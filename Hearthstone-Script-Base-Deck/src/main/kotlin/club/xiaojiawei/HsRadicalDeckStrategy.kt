@@ -300,13 +300,25 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val rival = War.rival
         var plays = me.playArea.cards.toList()
         plays.filter{ playCard -> playCard.canAttack(false) }.forEach { playCard ->
-            var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
+            var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() && !it.cardId.startsWith("GDB_100t") }
+            var tauntCard = toRivalList.find { card-> card.isTaunt }
             tauntCard?.let {
                 log.info { "card: $playCard, attack: $tauntCard" }
                 playCard.action.attack(tauntCard)
+                Thread.sleep(200L)
             }?:let {
-                log.info { "card: $playCard, attackHero" }
-                playCard.action.attackHero()
+                if (playCard.isAttackableByRush || (playCard.isRush && playCard.numTurnsInPlay == 0)) {
+                    var highCost = toRivalList.sortedBy { it.cost }.lastOrNull()
+                    highCost?.let {
+                        log.info { "card: $playCard, attack: $tauntCard" }
+                        playCard.action.attack(highCost)
+                        Thread.sleep(200L)
+                    }
+                }
+                else {
+                    log.info { "card: $playCard, attackHero" }
+                    playCard.action.attackHero()
+                }
             }
         }
     }
@@ -344,7 +356,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         if (card.cardType === CardTypeEnum.SPELL){
             if (card.cardId == "GDB_445") { // 陨石风暴
                 var highCostCount = me.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
-                var highCostCountRival = rival.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
+                var highCostCountRival = toRivalList.filter { playCard -> playCard.cost >= 3}.count()
                 if (highCostCount >= 3 && highCostCountRival <= 2) {
                     log.info { "too much high cost cards" }
                     return false;
@@ -389,7 +401,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = toRivalList.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -411,10 +423,10 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
-                var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                var canBeAttacked = rival.playArea.cards.filter { card-> card.canBeAttacked() }.sortedBy { card.cost }.lastOrNull()
-                log.info { "tauntCard: $tauntCard, canBeAttacked: $canBeAttacked, cardSize: ${rival.playArea.cards.size}"}
-                if (tauntCard == null && canBeAttacked == null && rival.playArea.cards.size != 0) {
+                var tauntCard = toRivalList.find { card-> card.isTaunt }
+                var canBeAttacked = toRivalList.sortedBy { card.cost }.lastOrNull()
+                log.info { "tauntCard: $tauntCard, canBeAttacked: $canBeAttacked, cardSize: ${toRivalList.size}"}
+                if (tauntCard == null && canBeAttacked == null && toRivalList.size != 0) {
                     return false;
                 }
             }
@@ -532,7 +544,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = toRivalList.find { card-> card.isTaunt }
                 var canBeAttacked = toRivalList.sortedBy { card.cost }.lastOrNull()
-                var firstCard = rival.playArea.cards.firstOrNull()
+                var firstCard = toRivalList.firstOrNull()
                 tauntCard?.let {
                     return runWithRetry(3, 200, card, it)
                 }?:let {
