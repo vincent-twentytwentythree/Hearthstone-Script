@@ -221,24 +221,24 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
         if (card.cardId == "CS3_034") { // 织法者玛里苟斯
             while (me.handArea.cards.size < 10 && maxWait > 0) {
-                log.info { "wait for card: ${me.handArea.cards.size} "}
+                log.info { "wait for card: ${me.handArea.cards.size}, expected: 10"}
                 Thread.sleep(2500L)
                 maxWait -= 1
             }
         }
-        else if (card.cardId == "MIS_307") {
+        else if (card.cardId == "MIS_307") { // 水宝宝鱼人
             while (me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0 && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
         }
-        else if (card.cardId == "VAC_323") {
+        else if (card.cardId == "VAC_323") { // 麦芽岩浆
             while (me.handArea.cards.count { it.cardId == "VAC_323t" } <= 0 && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
         }
-        else if (card.cardId == "VAC_323t") {
+        else if (card.cardId == "VAC_323t") { // 麦芽岩浆
             while (me.handArea.cards.count { it.cardId == "VAC_323t2" } <= 0 && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
@@ -258,7 +258,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             minionNeededToBurst.add(card)
         }
 
-        if (card.cardType == CardTypeEnum.SPELL && card.cardId != "GDB_445" ) { // 陨石风暴 不能法术迸发
+        // 法术迸发
+        // 法术可能被反制 todo MYWEN
+        if (card.cardType == CardTypeEnum.SPELL && card.cardId != "GDB_445" && minionNeededToBurst.size > 0) { // 陨石风暴 不能法术迸发
             var count1 = minionNeededToBurst.count { it.cardId == "GDB_434" }
             var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" }
             if (count1 > 0) {
@@ -269,6 +271,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 if (card.cardId == "VAC_323" || card.cardId == "VAC_323t") {
                     expectedSize = handSize + 2 * count2
                 }
+                if (card.cardId == "GDB_451" ) {
+                    expectedSize = handSize - 1 + 2 * count2 + 1
+                }
                 maxWait = 5
                 while (me.handArea.cards.size < expectedSize && maxWait > 0) {
                     log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
@@ -278,8 +283,16 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
             minionNeededToBurst.clear()
         }
-
-
+        else if (card.cardId == "GDB_451" ) { // 三角测量
+            var expectedSize = handSize - 1 + 1
+            maxWait = 5
+            while (me.handArea.cards.size < expectedSize && maxWait > 0) {
+                log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
+                Thread.sleep(2000L)
+                maxWait -= 1
+            }
+            minionNeededToBurst.clear()
+        }
     }
 
     private fun attackForAllCardsInPlayArea() {
@@ -444,7 +457,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (card.cardId == "GDB_445") { // 陨石风暴
                 log.info { "start storm, ${plays}" }
                 attackForAllCardsInPlayArea()
-                card.action.power()
+                return runWithRetry(3, 200, card, null)
             }
             else if (
                 card.cardId == "CS2_024" // 寒冰箭
@@ -456,7 +469,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "MIS_709" // 圣光荧光棒
                 || card.cardId == "CS2_029" // 火球术
             ) {
-                card.action.power(rival.playArea.hero)
+                return runWithRetry(3, 200, card, rival.playArea.hero)
             }
             else if (
                 card.cardId.startsWith("GDB_305") // 阳炎耀斑
@@ -471,7 +484,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
                 else {
-                    card.action.power()
+                    return runWithRetry(3, 200, card, null)
                 }
             }
             else if (
@@ -484,16 +497,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
                 else {
-                    card.action.power(highCost)
+                    return runWithRetry(3, 200, card, highCost)
+                    
                 }
             }
             else if (card.cardId.startsWith("VAC_916")) { // 神圣佳酿
                 var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
-                    card.action.power(me.playArea.hero)
+                    return runWithRetry(3, 200, card, me.playArea.hero)
                 }
                 else {
-                    card.action.power(highCost)
+                    return runWithRetry(3, 200, card, highCost)
                 }
             }
             else if (
@@ -505,11 +519,11 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
                 else {
-                    card.action.power(highCost)
+                    return runWithRetry(3, 200, card, highCost)
                 }
             }
             else {
-                card.action.power()
+                return runWithRetry(3, 200, card, null)
             }
         }
         else { //////////////////////////////////////////////////////////////////////////////////////非法术牌
@@ -520,15 +534,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 var canBeAttacked = rival.playArea.cards.filter { card-> card.canBeAttacked() }.sortedBy { card.cost }.lastOrNull()
                 var firstCard = rival.playArea.cards.firstOrNull()
                 tauntCard?.let {
-                    card.action.power(it)
+                    return runWithRetry(3, 200, card, it)
                 }?:let {
                     canBeAttacked?.let {
-                        card.action.power(it)
+                        return runWithRetry(3, 200, card, it)
                     }?:let {
                         firstCard?.let {
-                            card.action.power(it)
+                            return runWithRetry(3, 200, card, it)
                         }?:let {
-                            card.action.power()
+                            return runWithRetry(3, 200, card, null)
                         }
                     }
                 }
@@ -541,13 +555,37 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return false;
                 }
                 else {
-                    card.action.power(highCost)
+                    return runWithRetry(3, 200, card, highCost)
                 }
             }
             else {
-                card.action.power()
+                return runWithRetry(3, 200, card, null)
             }
         }
         return true
+    }
+
+    fun runWithRetry(
+        times: Int,            // Number of retry attempts
+        delayMillis: Long,     // Delay between retries in milliseconds
+        card: Card,
+        target: Card?
+    ): Boolean {
+        val me = War.me
+        var currentAttempt = 0
+
+        while (currentAttempt < times) {
+            target?.let {
+                card.action.power(target)
+            }?:let {
+                card.action.power()
+            }
+            currentAttempt++
+            Thread.sleep(delayMillis)
+            if (me.handArea.cards.count { it.entityId == card.entityId } <= 0) {
+                return true;
+            }
+        }
+        return false
     }
 }
