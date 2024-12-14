@@ -160,7 +160,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
                 log.info { "待出牌：${predictActionResponse}" }
                 for (cardId in predictActionResponse.action) {
-                    val card = me.handArea.cards.filter { it.cardId == cardId }.firstOrNull()
+                    val card = me.handArea.cards.filter { (it.cardId == cardId) || (it.cardId.startsWith("VAC_323") && cardId.startsWith("VAC_323"))}.firstOrNull()
                     if (card == null) {
                         continue
                     }
@@ -171,7 +171,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         if (succ == true) {
                             playedCard.add(card)
                             waitForUI(card, handSize)
-                            handsToPlaySimple.remove(card)
                         }
                     }
                 }
@@ -227,6 +226,24 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 maxWait -= 1
             }
         }
+        else if (card.cardId == "MIS_307") {
+            while (me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0 && maxWait > 0) {
+                Thread.sleep(500L)
+                maxWait -= 1
+            }
+        }
+        else if (card.cardId == "VAC_323") {
+            while (me.handArea.cards.count { it.cardId == "VAC_323t" } <= 0 && maxWait > 0) {
+                Thread.sleep(500L)
+                maxWait -= 1
+            }
+        }
+        else if (card.cardId == "VAC_323t") {
+            while (me.handArea.cards.count { it.cardId == "VAC_323t2" } <= 0 && maxWait > 0) {
+                Thread.sleep(500L)
+                maxWait -= 1
+            }
+        }
         else if (card.cardId == "GDB_445") { // 陨石风暴
             // Sleep for 2 seconds
             Thread.sleep(2500L)
@@ -252,14 +269,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 if (card.cardId == "VAC_323" || card.cardId == "VAC_323t") {
                     expectedSize = handSize + 2 * count2
                 }
+                maxWait = 5
                 while (me.handArea.cards.size < expectedSize && maxWait > 0) {
                     log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
-                    Thread.sleep(3000L)
+                    Thread.sleep(2000L)
                     maxWait -= 1
                 }
             }
             minionNeededToBurst.clear()
         }
+
+
     }
 
     private fun attackForAllCardsInPlayArea() {
