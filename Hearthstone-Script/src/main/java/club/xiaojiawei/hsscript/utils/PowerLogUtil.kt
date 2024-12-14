@@ -196,7 +196,7 @@ object PowerLogUtil {
         return extraEntity
     }
 
-    private fun parseCommonEntity(commonEntity: CommonEntity, line: String) {
+    fun parseCommonEntity(commonEntity: CommonEntity, line: String) {
         val index = line.lastIndexOf("]")
         val playerIndex = line.lastIndexOf("player", index)
         val cardIdIndex = line.lastIndexOf("cardId", playerIndex)

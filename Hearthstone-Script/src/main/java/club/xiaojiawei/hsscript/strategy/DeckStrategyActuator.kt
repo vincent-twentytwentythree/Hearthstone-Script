@@ -163,10 +163,12 @@ object DeckStrategyActuator {
         SystemUtil.delayShortMedium()
         val index = deckStrategy?.executeDiscoverChooseCard(*cards)?:0
         War.me.let {
-            GameUtil.clickDiscover(index, it.handArea.cardSize())
-            SystemUtil.delayShort()
-            val card = cards[index]
-            log.info { "选择了：" + card.toSimpleString() }
+            if (cards.size > 0) {
+                GameUtil.clickDiscover(cards[index].zonePos?:0, cards.size)
+                SystemUtil.delayShort()
+                val card = cards[index]
+                log.info { "选择了：" + card.toSimpleString() }
+            }
         }
         log.info { "执行发现选牌策略完毕" }
 

@@ -22,6 +22,7 @@ import club.xiaojiawei.hsscript.utils.PowerLogUtil.dealFullEntity
 import club.xiaojiawei.hsscript.utils.PowerLogUtil.dealShowEntity
 import club.xiaojiawei.hsscript.utils.PowerLogUtil.dealTagChange
 import club.xiaojiawei.hsscript.utils.PowerLogUtil.isRelevance
+import club.xiaojiawei.hsscript.utils.PowerLogUtil.parseCommonEntity
 import club.xiaojiawei.hsscript.utils.SystemUtil
 import club.xiaojiawei.interfaces.PhaseStrategy
 import club.xiaojiawei.status.War.currentPhase
@@ -61,24 +62,49 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                     mark = accessFile.filePointer
                     SystemUtil.delay(1000)
                     if (accessFile.length() <= mark && me.isValid()) {
-                        val cards: List<Card> = me.setasideArea.cards
-                        val size = cards.size
-                        if (size >= 3 && lastDiscoverEntityId != cards.last().entityId && cards[size - 1].creator == cards[size - 2].creator
-                            && cards[size - 1].creator == cards[size - 3].creator
-                        ) {
+                        val cards: List<Card> = me.setasideArea.cards.toMutableList()
+                        log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
+                        if (cards.size > 0 && lastDiscoverEntityId != cards.last().entityId && cards.last().zonePos != null) {
+                            val discoveryCards: MutableList<Card> = mutableListOf()
+                            for (card in cards.reversed()) {
+                                if (card.entityId != lastDiscoverEntityId && card.zonePos != null && !card.cardId.isBlank()) {
+                                    discoveryCards.add(card)
+                                }
+                                else {
+                                    break;
+                                }
+                            }
                             lastDiscoverEntityId = cards.last().entityId
-                            if (currentPhase != WarPhaseEnum.REPLACE_CARD) {
-                                log.info { "触发发现动作" }
+
+                            if (currentPhase != WarPhaseEnum.REPLACE_CARD && discoveryCards.size > 0) {
+                                log.info { "触发发现动作 ${discoveryCards} " }
                                 (DeckStrategyThread({
                                     discoverChooseCard(
-                                        cards[size - 3],
-                                        cards[size - 2],
-                                        cards[size - 1]
+                                        *(discoveryCards.sortedBy { it.zonePos } .toTypedArray())
                                     )
                                 }, "Discover Choose Card Thread").also { addTask(it) }).start()
+                            }
 
+                        }
+                    }
+                }
+                else if (l.contains("GameState.DebugPrintEntityChoices") && l.contains("Entities[")) {
+                    while (l != null && l.contains("GameState.DebugPrintEntityChoices") && l.contains("Entities[")) { // MYWEN
+                        val entitiesIndex = l.indexOf("Entities[")
+                        val zoneIndex = entitiesIndex + "Entities[".length
+                        val zonePos = l.substring(zoneIndex, zoneIndex + 1).trim().toInt()
+    
+                        val extraEntity = ExtraEntity()
+                        parseCommonEntity(extraEntity, l)
+                        if (!extraEntity.cardId.isBlank()) {
+                            me.setasideArea.cards.forEach {
+                                if (it.entityId == extraEntity.entityId) {
+                                    log.info { "extraEntity: ${extraEntity}, card: ${it} "}
+                                    it.zonePos = zonePos
+                                }
                             }
                         }
+                        l = accessFile.readLine()
                     }
                 } else if (isRelevance(l)) {
                     log.debug { l }

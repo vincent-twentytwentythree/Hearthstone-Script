@@ -106,15 +106,14 @@ class HsCommonDeckStrategy : DeckStrategy() {
         Thread.sleep(300)
         for ((index, card) in cards.withIndex()) {
             // MYWEN
-            log.info { "card：" + card.toSimpleString() + " index: " + index }
-            if (card.cardId == "GDB_430") {
+            log.info { "card：${card.toSimpleString()}, index: ${index}, zonePos: ${card.zonePos}" }
+            if (card.cardId == "VAC_321t") {
                 return index
             }
-            else if (card.cardId == "VAC_321t") {
+            else if (card.cardId == "GDB_430") {
                 return index
             }
             if (card.cost > highCost) {
-                log.info { "card：" + card.toSimpleString() + " index: " + index }
                 highCost = card.cost
                 highIndex = index
             }

@@ -56,11 +56,13 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         super.reset()
         minionNeededToBurst.clear()
         playedActions.clear()
+        round = 0
     }
 
     // how to clean MYWEN
     private val minionNeededToBurst: ArrayList<Card> = arrayListOf()
     private val playedActions: ArrayList<ArrayList<Card>> = arrayListOf()
+    private var round: Int = 0
 
     fun convertToJson(predictActionRequest: PredictActionRequest): String {
         val gson = Gson()
@@ -112,6 +114,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
     // MYWEN
     override fun executeOutCard() {
         if (War.me.isValid()){
+            round += 1
             if (War.me.playArea.isFull) {
                 log.info { "playArea is full, clean it first" }
                 DeckStrategyUtil.cleanPlay()
@@ -120,7 +123,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             val me = War.me
             val rival = War.rival
             var plays = me.playArea.cards.toList()
-            var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
+            var toRivalList = War.rival.playArea.cards.filter { it.canBeAttacked() }.toList()
             var hands = me.handArea.cards.toList()
             log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
             minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
@@ -140,9 +143,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             else {
                 position = "second_hand"
             }
-
-            var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toList()
+            var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toMutableList()
             var predictActionRequest = PredictActionRequest(position,
+                                                            round,
                                                             me.usableResource,
                                                             handsToPlaySimple.map { it.cardId } ,
                                                             arrayListOf(),
@@ -157,16 +160,18 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
                 log.info { "待出牌：${predictActionResponse}" }
                 for (cardId in predictActionResponse.action) {
-                    val card = hands.filter { it.cardId == cardId }.firstOrNull()
+                    val card = me.handArea.cards.filter { it.cardId == cardId }.firstOrNull()
                     if (card == null) {
                         continue
                     }
                     log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                     if (me.usableResource >= card.cost){
+                        var handSize = me.handArea.cards.size
                         var succ = playCard(card)
                         if (succ == true) {
                             playedCard.add(card)
-                            waitForUI(card)
+                            waitForUI(card, handSize)
+                            handsToPlaySimple.remove(card)
                         }
                     }
                 }
@@ -182,10 +187,11 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         val card = simulateWeightCard.card
                         log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                         if (me.usableResource >= card.cost){
+                            var handSize = me.handArea.cards.size
                             var succ = playCard(card)
                             if (succ == true) {
                                 playedCard.add(card)
-                                waitForUI(card)
+                                waitForUI(card, handSize)
                             }
                         }
                     }
@@ -209,12 +215,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         }
     }
 
-    private fun waitForUI(card: Card) {
+    private fun waitForUI(card: Card, handSize: Int) {
         val me = War.me
         var hands = me.handArea.cards.toList()
+        var maxWait = 10
 
         if (card.cardId == "CS3_034") { // 织法者玛里苟斯
-            Thread.sleep(2500L * (10 - hands.size + 1))
+            while (me.handArea.cards.size < 10 && maxWait > 0) {
+                log.info { "wait for card: ${me.handArea.cards.size} "}
+                Thread.sleep(2500L)
+                maxWait -= 1
+            }
         }
         else if (card.cardId == "GDB_445") { // 陨石风暴
             // Sleep for 2 seconds
@@ -223,14 +234,29 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         else {
             Thread.sleep(500L)
         }
+
         if (card.cardId == "GDB_434" // 流彩巨岩
             || card.cardId == "GDB_310" // 虚灵神谕者
         ) {
             minionNeededToBurst.add(card)
         }
-        if (card.cardType == CardTypeEnum.SPELL ) {
-            if (minionNeededToBurst.size > 0) {
-                Thread.sleep(3000L * minionNeededToBurst.size)
+
+        if (card.cardType == CardTypeEnum.SPELL && card.cardId != "GDB_445" ) { // 陨石风暴 不能法术迸发
+            var count1 = minionNeededToBurst.count { it.cardId == "GDB_434" }
+            var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" }
+            if (count1 > 0) {
+                Thread.sleep(3000L * count1)
+            }
+            if (count2 > 0) {
+                var expectedSize = handSize - 1 + 2 * count2
+                if (card.cardId == "VAC_323" || card.cardId == "VAC_323t") {
+                    expectedSize = handSize + 2 * count2
+                }
+                while (me.handArea.cards.size < expectedSize && maxWait > 0) {
+                    log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
+                    Thread.sleep(3000L)
+                    maxWait -= 1
+                }
             }
             minionNeededToBurst.clear()
         }
