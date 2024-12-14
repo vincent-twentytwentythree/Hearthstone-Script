@@ -53,7 +53,7 @@ object DeckStrategyActuator {
             while (!PauseStatus.isPause && !isMyTurn && !Thread.interrupted() && Mode.currMode === ModeEnum.GAMEPLAY) {
                 var toList = War.rival.playArea.cards.toList()
                 for (card in toList) {
-                    if (Random.nextInt() and 1 == 1) {
+                    if ((Random.nextInt() and 1 == 1) && !card.cardId.startsWith("GDB_100t")) {
                         card.action.lClick()
                         log.info { "点击敌方战场卡牌：${card}" }
                     }
