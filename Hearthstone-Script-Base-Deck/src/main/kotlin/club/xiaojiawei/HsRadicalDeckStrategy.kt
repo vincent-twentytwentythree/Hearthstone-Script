@@ -265,6 +265,15 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" }
             if (count1 > 0) {
                 Thread.sleep(3000L * count1)
+                if (card.cardId == "GDB_451" && count2 <= 0) { // 三角测量
+                    var expectedSize = handSize - 1 + 1
+                    maxWait = 5
+                    while (me.handArea.cards.size < expectedSize && maxWait > 0) {
+                        log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
+                        Thread.sleep(2000L)
+                        maxWait -= 1
+                    }
+                }
             }
             if (count2 > 0) {
                 var expectedSize = handSize - 1 + 2 * count2
