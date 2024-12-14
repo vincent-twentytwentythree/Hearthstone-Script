@@ -111,7 +111,8 @@ class HsCommonDeckStrategy : DeckStrategy() {
                 return index
             }
             else if (card.cardId == "GDB_430") {
-                return index
+                highCost = 100
+                highIndex = index
             }
             if (card.cost > highCost) {
                 highCost = card.cost
