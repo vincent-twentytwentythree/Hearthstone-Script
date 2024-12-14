@@ -123,7 +123,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             val me = War.me
             val rival = War.rival
             var plays = me.playArea.cards.toList()
-            var toRivalList = War.rival.playArea.cards.filter { it.canBeAttacked() }.toList()
+            var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() && !it.cardId.startsWith("GDB_100t") }
             var hands = me.handArea.cards.toList()
             log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
             minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
@@ -319,7 +319,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() && !it.cardId.startsWith("GDB_100t") }
         var hands = me.handArea.cards.toList()
         if (card.cardType === CardTypeEnum.SPELL){
             return true
@@ -339,7 +339,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() && !it.cardId.startsWith("GDB_100t") }
         var hands = me.handArea.cards.toList()
         if (card.cardType === CardTypeEnum.SPELL){
             if (card.cardId == "GDB_445") { // 陨石风暴
@@ -452,7 +452,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
+        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() && !it.cardId.startsWith("GDB_100t") }
         if (card.cardType === CardTypeEnum.SPELL) {
             if (card.cardId == "GDB_445") { // 陨石风暴
                 log.info { "start storm, ${plays}" }
@@ -492,7 +492,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = rival.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = toRivalList.sortedBy { playCard -> playCard.cost }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -530,8 +530,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
-                var tauntCard = rival.playArea.cards.find { card-> card.isTaunt }
-                var canBeAttacked = rival.playArea.cards.filter { card-> card.canBeAttacked() }.sortedBy { card.cost }.lastOrNull()
+                var tauntCard = toRivalList.find { card-> card.isTaunt }
+                var canBeAttacked = toRivalList.sortedBy { card.cost }.lastOrNull()
                 var firstCard = rival.playArea.cards.firstOrNull()
                 tauntCard?.let {
                     return runWithRetry(3, 200, card, it)
