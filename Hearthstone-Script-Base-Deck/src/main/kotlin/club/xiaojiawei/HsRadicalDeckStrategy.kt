@@ -108,7 +108,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail")
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0)
     }
 
     // MYWEN
@@ -159,6 +159,13 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (predictActionResponse.status == "succ") {
 
                 log.info { "待出牌：${predictActionResponse}" }
+                if (predictActionResponse.cost <= predictActionResponse.crystal - 2 && predictActionResponse.action.count { it == "GDB_445" } <= 0) {
+                    me.playArea.power?.let {
+                        if (me.usableResource >= it.cost || it.cost == 0) {
+                            it.action.power()
+                        }
+                    }
+                }
                 for (cardId in predictActionResponse.action) {
                     val card = me.handArea.cards.filter { (it.cardId == cardId) || (it.cardId.startsWith("VAC_323") && cardId.startsWith("VAC_323"))}.firstOrNull()
                     if (card == null) {
