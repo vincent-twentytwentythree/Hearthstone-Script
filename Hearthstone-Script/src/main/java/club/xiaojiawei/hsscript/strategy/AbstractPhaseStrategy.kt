@@ -64,7 +64,7 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                     SystemUtil.delay(1000)
                     if (accessFile.length() <= mark && me.isValid()) {
                         val cards: List<Card> = me.setasideArea.cards.toMutableList()
-                        log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
+                        // log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
                         if (cards.size > 0 && lastDiscoverEntityId != cards.last().entityId && lastCreator != cards.last().creator && cards.last().zonePos != null) {
                             val discoveryCards: MutableList<Card> = mutableListOf()
                             for (card in cards.reversed()) {
@@ -104,7 +104,7 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                     }
                 }
                 else if (l.contains("GameState.DebugPrintEntityChoices") && l.contains("Entities[")) {
-                    while (l != null && l.contains("GameState.DebugPrintEntityChoices") && l.contains("Entities[")) { // MYWEN
+                    while (l != null && l.contains("GameState.DebugPrintEntityChoices") && l.contains("Entities[")) { // MYWEN discovery
                         val entitiesIndex = l.indexOf("Entities[")
                         val zoneIndex = entitiesIndex + "Entities[".length
                         val zonePos = l.substring(zoneIndex, zoneIndex + 1).trim().toInt()

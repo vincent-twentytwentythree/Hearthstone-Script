@@ -117,7 +117,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             round += 1
             if (War.me.playArea.cards.size >= 5) {
                 log.info { "playArea is full, clean it first" }
-                DeckStrategyUtil.cleanPlay()
+                attackForAllCardsInPlayArea()
             }
 
             val me = War.me
@@ -232,24 +232,28 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 Thread.sleep(2500L)
                 maxWait -= 1
             }
+            Thread.sleep(500L)
         }
         else if (card.cardId == "MIS_307") { // 水宝宝鱼人
-            while (me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0 && maxWait > 0) {
+            while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0) && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
+            Thread.sleep(500L)
         }
         else if (card.cardId == "VAC_323") { // 麦芽岩浆
-            while (me.handArea.cards.count { it.cardId == "VAC_323t" } <= 0 && maxWait > 0) {
+            while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "VAC_323t" } <= 0) && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
+            Thread.sleep(500L)
         }
         else if (card.cardId == "VAC_323t") { // 麦芽岩浆
-            while (me.handArea.cards.count { it.cardId == "VAC_323t2" } <= 0 && maxWait > 0) {
+            while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "VAC_323t2" } <= 0) && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
+            Thread.sleep(500L)
         }
         else if (card.cardId == "GDB_445") { // 陨石风暴
             // Sleep for 2 seconds
@@ -268,28 +272,28 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         // 法术迸发
         // 法术可能被反制 todo MYWEN
         if (card.cardType == CardTypeEnum.SPELL && card.cardId != "GDB_445" && minionNeededToBurst.size > 0) { // 陨石风暴 不能法术迸发
-            var count1 = minionNeededToBurst.count { it.cardId == "GDB_434" }
-            var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" }
+            var count1 = minionNeededToBurst.count { it.cardId == "GDB_434" } // 流彩巨岩
+            var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" } // 虚灵神谕者
             if (count1 > 0) {
                 Thread.sleep(3000L * count1)
-                if (card.cardId == "GDB_451" && count2 <= 0) { // 三角测量
-                    var expectedSize = handSize - 1 + 1
-                    maxWait = 5
-                    while (me.handArea.cards.size < expectedSize && maxWait > 0) {
-                        log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
-                        Thread.sleep(2000L)
-                        maxWait -= 1
-                    }
-                }
             }
             if (count2 > 0) {
                 var expectedSize = handSize - 1 + 2 * count2
-                if (card.cardId == "VAC_323" || card.cardId == "VAC_323t") {
+                if (card.cardId == "VAC_323" || card.cardId == "VAC_323t") { // 麦芽岩浆
                     expectedSize = handSize + 2 * count2
                 }
-                if (card.cardId == "GDB_451" ) {
+                if (card.cardId == "GDB_451" ) { // 三角测量
                     expectedSize = handSize - 1 + 2 * count2 + 1
                 }
+                maxWait = 5
+                while (me.handArea.cards.size < expectedSize && maxWait > 0) {
+                    log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
+                    Thread.sleep(2000L)
+                    maxWait -= 1
+                }
+            }
+            else if (card.cardId == "GDB_451") { // 三角测量
+                var expectedSize = handSize - 1 + 1
                 maxWait = 5
                 while (me.handArea.cards.size < expectedSize && maxWait > 0) {
                     log.info { "wait for card: ${me.handArea.cards.size}, expected: ${expectedSize} "}
