@@ -65,7 +65,7 @@ class HsCommonDeckStrategy : DeckStrategy() {
 
         val myHandCards = me.handArea.cards.toList()
         val myHandCardsCopy = myHandCards.toMutableList()
-        myHandCardsCopy.removeAll { card -> card.cardType != CardTypeEnum.MINION || card.isBattlecry }
+        myHandCardsCopy.removeAll { card -> card.cardType != CardTypeEnum.MINION }
 
         val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(
             myHandCardsCopy, me.usableResource
@@ -100,18 +100,26 @@ class HsCommonDeckStrategy : DeckStrategy() {
         return cards.find { it.isCoinCard }
     }
 
-    override fun executeDiscoverChooseCard(vararg cards: Card): Int {
+    override fun executeDiscoverChooseCard(vararg cards: Card): Int { // MYWEN
+        var rivalCount = War.rival.playArea.cards.count { it.canAttack(true) }
         var highCost = -1;
         var highIndex = 0;
         Thread.sleep(300)
         for ((index, card) in cards.withIndex()) {
-            // MYWEN
             log.info { "card：${card.toSimpleString()}, index: ${index}, zonePos: ${card.zonePos}" }
-            if (card.cardId == "VAC_321t") {
+            if (card.cardId == "VAC_321t") { // 爆发
                 return index
             }
-            else if (card.cardId == "GDB_430") {
+            else if (card.cardId == "GDB_430") { // 小行星
                 highCost = 100
+                highIndex = index
+            }
+            else if (card.cardId == "VAC_323" && rivalCount >= 4) {
+                highCost = 200
+                highIndex = index
+            }
+            else if (card.cardId == "GDB_445" && rivalCount >= 4) {
+                highCost = 150
                 highIndex = index
             }
             if (card.cost > highCost) {

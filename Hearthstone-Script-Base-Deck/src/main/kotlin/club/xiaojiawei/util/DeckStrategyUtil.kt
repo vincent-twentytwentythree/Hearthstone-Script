@@ -127,6 +127,8 @@ object DeckStrategyUtil {
     private fun clean(
         myAtcWeight: Double,
         rivalAtcWeight: Double,
+        coreRivalList: List<Card> = emptyList(),
+        coreCompanionList: List<Card> = emptyList(),
     ) {
         val myCardWeightCalc: Function<Card, Double> = Function {
             var value = CARD_WEIGHT_TRIE[it.cardId]?.weight ?: 1.0
@@ -190,7 +192,7 @@ object DeckStrategyUtil {
 
 //        清理嘲讽
         val myAttackCountCalc: Function<Card, Int> = Function<Card, Int> {
-            if (it.canAttack()) {
+            if (it.canAttack() && !coreCompanionList.contains(it)) {
                 if (it.isWindFury) 2 else 1
             } else 0
         }
@@ -240,6 +242,54 @@ object DeckStrategyUtil {
             } else {
                 firstMyCards = result.myCard
                 rivalPlayCards.removeIf { it.isTaunt && it.canBeAttacked() }
+            }
+        }
+
+        // 清理核心
+        val findCoreRivalCardCount = this.rivalPlayCards.count { coreRivalList.contains(it) }
+        if (findCoreRivalCardCount > 0) {
+
+            myInversionAttackCountCalc = Function<Card, Int> { 0 }
+            rivalAttackCountCalc = Function<Card, Int> {
+                if (coreRivalList.contains(it) && it.canBeAttacked()) {
+                    1
+                } else 0
+            }
+            rivalInversionAttackCountCalc = Function<Card, Int> { 0 }
+            val (myCards, rivalCards) = getCleanData(
+                myPlayCards = myPlayCards,
+                rivalPlayCards = rivalPlayCards,
+                myAtcWeightCalc = myAtcWeightCalc,
+                rivalAtcWeightCalc = rivalAtcWeightCalc,
+                myAttackCountCalc = myAttackCountCalc,
+                myInversionAttackCountCalc = myInversionAttackCountCalc,
+                rivalAttackCountCalc = rivalAttackCountCalc,
+                rivalInversionAttackCountCalc = rivalInversionAttackCountCalc,
+                myCardWeightCalc = myCardWeightCalc,
+                rivalCardWeightCalc = rivalCardWeightCalc,
+            )
+            text = "开始思考清理核心"
+            log.info { text }
+            if (!EXEC_ACTION) {
+                println(text)
+            }
+            val result = calcClean(myCards, rivalCards, true)
+            val deathCount = result.execAction()
+            if (deathCount < findCoreRivalCardCount) {
+                return
+            }
+            if (EXEC_ACTION) {
+                Thread.sleep(3500)
+                if (this.rivalPlayCards.count { coreRivalList.contains(it) } > 0) {
+                    return
+                }
+                myPlayCards = this.myPlayCards.toMutableList()
+                rivalPlayCards = this.rivalPlayCards.toMutableList()
+                this.myPlayArea.hero?.let { myPlayCards.add(it) }
+                this.rivalPlayArea.hero?.let { rivalPlayCards.add(it) }
+            } else {
+                firstMyCards = result.myCard
+                rivalPlayCards.removeIf { coreRivalList.contains(it) && it.canBeAttacked() }
             }
         }
 
@@ -559,9 +609,11 @@ object DeckStrategyUtil {
     fun cleanPlay(
         myAtcWeight: Double = 1.2,
         rivalAtcWeight: Double = 1.2,
+        coreRivalList: List<Card> = emptyList(),
+        coreCompanionList: List<Card> = emptyList(),
     ) {
         assign()
-        clean(myAtcWeight, rivalAtcWeight)
+        clean(myAtcWeight, rivalAtcWeight, coreRivalList, coreCompanionList)
     }
 
     fun calcPowerOrderConvert(cards: List<Card>, target: Int,
@@ -583,7 +635,6 @@ object DeckStrategyUtil {
     }
 
     fun calcPowerOrder(cards: List<SimulateWeightCard>, oriTarget: Int): Pair<Double, List<SimulateWeightCard>> {
-        // MYWEN
         // dp[j] 表示总 cost 为 j 时的最高 (cost + weight) 值
         var luckCoin = cards.count { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }
         var luckCoinList: MutableList<SimulateWeightCard> = cards.filter { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }.toMutableList()

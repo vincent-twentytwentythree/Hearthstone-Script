@@ -59,7 +59,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         round = 0
     }
 
-    // how to clean MYWEN
     private val minionNeededToBurst: ArrayList<Card> = arrayListOf()
     private val playedActions: ArrayList<ArrayList<Card>> = arrayListOf()
     private var round: Int = 0
@@ -108,99 +107,114 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0)
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, emptyList(), emptyList())
     }
 
-    // MYWEN
-    override fun executeOutCard() {
+    override fun executeOutCard() { // MYWEN
         if (War.me.isValid()){
             round += 1
-            if (War.me.playArea.cards.size >= 5) {
-                log.info { "playArea is full, clean it first" }
-                attackForAllCardsInPlayArea()
-            }
-
-            val me = War.me
-            val rival = War.rival
-            var plays = me.playArea.cards.toList()
-            var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
-            var hands = me.handArea.cards.toList()
-            log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
-            minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
-            log.info { "after filter minionNeededToBurst: $minionNeededToBurst" }
-            log.info { "rival: $toRivalList" }
-            log.info { "me: $plays" }
-//            使用地标
-            plays.forEach {card->
+            // 使用地标
+            War.me.playArea.cards.toList().forEach {card->
                 if (card.cardType === CardTypeEnum.LOCATION && !card.isLocationActionCooldown){
                     card.action.lClick()
                 }
             }
-            var position = "landlord"
-            if (firstPlayerGameId == "firesnow#51434") { // 先手
-                position = "landlord"
-            }
-            else {
-                position = "second_hand"
-            }
-            var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toMutableList()
-            var predictActionRequest = PredictActionRequest(position,
-                                                            round,
-                                                            me.usableResource,
-                                                            handsToPlaySimple.map { it.cardId } ,
-                                                            arrayListOf(),
-                                                            playedActions.map { it.map{ card -> card.cardId } },
-                                                            toRivalList.map { it.cardId },
-                                                            plays.map { it.cardId },
-                                                            minionNeededToBurst.map { it.cardId }
-                                                            )
-            var predictActionResponse = sendPostRequest(predictActionRequest)
             val playedCard: ArrayList<Card> = arrayListOf()
-            if (predictActionResponse.status == "succ") {
+            var retry: Int = 0
+            var heroPlay = false
+            while (retry <= 5) {
+                val me = War.me
+                val rival = War.rival
+                var plays = me.playArea.cards.toList()
+                var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
 
-                log.info { "待出牌：${predictActionResponse}" }
-                if (predictActionResponse.cost <= predictActionResponse.crystal - 2 && predictActionResponse.action.count { it == "GDB_445" } <= 0) {
-                    me.playArea.power?.let {
-                        if (me.usableResource >= it.cost || it.cost == 0) {
-                            it.action.power()
-                        }
-                    }
+                log.info { "before filter minionNeededToBurst: $minionNeededToBurst" }
+                minionNeededToBurst.removeIf { !plays.contains(it) } // remove died minion
+                log.info { "after filter minionNeededToBurst: $minionNeededToBurst" }
+                log.info { "rival: $toRivalList" }
+                log.info { "me: $plays" }
+
+                var position = "landlord"
+                if (firstPlayerGameId == "firesnow#51434") { // 先手
+                    position = "landlord"
                 }
-                for (cardId in predictActionResponse.action) {
-                    val card = me.handArea.cards.filter { (it.cardId == cardId) || (it.cardId.startsWith("VAC_323") && cardId.startsWith("VAC_323"))}.firstOrNull()
-                    if (card == null) {
-                        continue
-                    }
-                    log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
-                    if (me.usableResource >= card.cost){
-                        var handSize = me.handArea.cards.size
-                        var succ = playCard(card)
-                        if (succ == true) {
-                            playedCard.add(card)
-                            waitForUI(card, handSize)
-                        }
-                    }
+                else {
+                    position = "second_hand"
                 }
-            }
-            else {
-                var handsToPlay = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurn(it) }.toList()
-                // val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource)
-                val (_, resultCards) = DeckStrategyUtil.calcPowerOrderConvert(handsToPlay, me.usableResource, toRivalList, plays, hands, minionNeededToBurst)
-                if (resultCards.isNotEmpty()) {
-                    val sortCard = DeckStrategyUtil.sortCard(resultCards)
-                    log.info { "待出牌：$sortCard" }
-                    for (simulateWeightCard in sortCard) {
-                        val card = simulateWeightCard.card
+                var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toMutableList()
+                var predictActionRequest = PredictActionRequest(position,
+                                                                round,
+                                                                me.usableResource,
+                                                                handsToPlaySimple.map { it.cardId } ,
+                                                                arrayListOf(),
+                                                                playedActions.map { it.map{ card -> card.cardId } },
+                                                                toRivalList.map { it.cardId },
+                                                                plays.map { it.cardId },
+                                                                minionNeededToBurst.map { it.cardId }
+                                                                )
+                var predictActionResponse = sendPostRequest(predictActionRequest)
+
+                if (predictActionResponse.status == "succ" && predictActionResponse.action.size != 0) {
+                    log.info { "待出牌：${predictActionResponse}" }
+
+                    for (cardId in predictActionResponse.action) {
+                        var findCard: Int = 0
+                        var card: Card? = null
+                        while (findCard < 3) {
+                            card = me.handArea.cards.filter { (it.cardId == cardId) || (it.cardId.startsWith("VAC_323") && cardId.startsWith("VAC_323"))}.firstOrNull()
+                            findCard += 1
+                            if (card == null) {
+                                Thread.sleep(1000)
+                            }
+                        }
+                        if (card == null) {
+                            continue
+                        }
+                        if (predictActionResponse.cost <= predictActionResponse.crystal - 2
+                            && (cardId == "TOY_508" || cardId.startsWith("VAC_323")) // 打之前，加法强
+                            && minionNeededToBurst.count { it.cardId == "GDB_310" } == 0 // 虚灵神谕者
+                            && heroPlay == false
+                            && me.playArea.isFull == false
+                        ) {
+                            log.info { "usableResource: ${me.usableResource}, cost: 2, hero play"  }
+                            me.playArea.power?.let {
+                                if (me.usableResource >= it.cost || it.cost == 0) {
+                                    it.action.power()
+                                }
+                            }
+                            heroPlay = true
+                        }
                         log.info { "usableResource: ${me.usableResource}, cost: ${card.cost}, card: $card"  }
                         if (me.usableResource >= card.cost){
                             var handSize = me.handArea.cards.size
+                            var battleSize = me.playArea.cards.size
                             var succ = playCard(card)
                             if (succ == true) {
                                 playedCard.add(card)
-                                waitForUI(card, handSize)
+                                val getNewCard = waitForUI(card, handSize, battleSize)
+                                if (getNewCard == true) { // 有新牌，重新跑模型
+                                    break
+                                }
                             }
                         }
                     }
+                }
+                else if (predictActionResponse.status != "succ") {
+                    Thread.sleep(2000)
+                }
+                // 所有牌出完, 重新跑模型, 确认没有漏牌
+                val coreRivalCardList = predictActionResponse.coreRivalCardList.toSet()
+                val coreCompanionCardList = predictActionResponse.coreCompanionCardList.toSet()
+                DeckStrategyUtil.cleanPlay(1.2, 1.2,
+                    War.rival.playArea.cards.toList().filter { it.canBeAttacked() && coreRivalCardList.contains(it.cardId)},
+                    War.me.playArea.cards.toList().filter { minionNeededToBurst.contains(it) || coreCompanionCardList.contains(it.cardId) }
+                )
+                attackForAllCardsInPlayArea()
+                retry += 1
+
+                var smallCard = me.handArea.cards.sortedBy { it.cost }.firstOrNull()
+                if (smallCard == null || me.usableResource < smallCard.cost || me.usableResource == 0) {
+                    break
                 }
             }
 
@@ -208,38 +222,50 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
             // Sleep for 2 seconds
             Thread.sleep(2000)
-            plays = me.playArea.cards.toList()
-//            使用地标
+            var plays = War.me.playArea.cards.toList()
+            //            使用地标
             plays.forEach {card->
                 if (card.cardType === CardTypeEnum.LOCATION && !card.isLocationActionCooldown){
                     card.action.lClick()
                 }
             }
-            commonDeckStrategy.executeOutCard()
 
             attackForAllCardsInPlayArea()
+            // 确认没有漏牌
+            commonDeckStrategy.executeOutCard()
         }
     }
 
-    private fun waitForUI(card: Card, handSize: Int) {
+    private fun waitForUI(card: Card, handSize: Int, battleSize: INt): Boolean {
         val me = War.me
         var hands = me.handArea.cards.toList()
         var maxWait = 10
 
+        var getNewCard = false
+
         if (card.cardId == "CS3_034") { // 织法者玛里苟斯
+            maxWait = 20
             while (me.handArea.cards.size < 10 && maxWait > 0) {
                 log.info { "wait for card: ${me.handArea.cards.size}, expected: 10"}
                 Thread.sleep(2500L)
                 maxWait -= 1
             }
             Thread.sleep(500L)
+            getNewCard = true
         }
         else if (card.cardId == "MIS_307") { // 水宝宝鱼人
-            while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0) && maxWait > 0) {
+            var expectedPlayAreaSize = battleSize + 1
+            if (battleSize <= 5) {
+                expectedPlayAreaSize = battleSize + 2
+            }
+            while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "MIS_307t1" } <= 0
+            || me.playArea.cards.size < expectedPlayAreaSize
+            ) && maxWait > 0) {
                 Thread.sleep(500L)
                 maxWait -= 1
             }
             Thread.sleep(500L)
+            getNewCard = true
         }
         else if (card.cardId == "VAC_323") { // 麦芽岩浆
             while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "VAC_323t" } <= 0) && maxWait > 0) {
@@ -247,6 +273,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 maxWait -= 1
             }
             Thread.sleep(500L)
+            getNewCard = true
         }
         else if (card.cardId == "VAC_323t") { // 麦芽岩浆
             while ((me.handArea.cards.size < handSize || me.handArea.cards.count { it.cardId == "VAC_323t2" } <= 0) && maxWait > 0) {
@@ -254,6 +281,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 maxWait -= 1
             }
             Thread.sleep(500L)
+            getNewCard = true
         }
         else if (card.cardId == "GDB_445") { // 陨石风暴
             // Sleep for 2 seconds
@@ -269,8 +297,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             minionNeededToBurst.add(card)
         }
 
-        // 法术迸发
-        // 法术可能被反制 todo MYWEN
+        // 法术迸发 法术可能被反制 todo MYWEN
         if (card.cardType == CardTypeEnum.SPELL && card.cardId != "GDB_445" && minionNeededToBurst.size > 0) { // 陨石风暴 不能法术迸发
             var count1 = minionNeededToBurst.count { it.cardId == "GDB_434" } // 流彩巨岩
             var count2 = minionNeededToBurst.count { it.cardId == "GDB_310" } // 虚灵神谕者
@@ -291,6 +318,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     Thread.sleep(2000L)
                     maxWait -= 1
                 }
+                getNewCard = true
             }
             else if (card.cardId == "GDB_451") { // 三角测量
                 var expectedSize = handSize - 1 + 1
@@ -300,6 +328,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     Thread.sleep(2000L)
                     maxWait -= 1
                 }
+                getNewCard = true
             }
             minionNeededToBurst.clear()
         }
@@ -312,7 +341,20 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 maxWait -= 1
             }
             minionNeededToBurst.clear()
+            getNewCard = true
         }
+        else if (card.cardId == "MIS_307t1") { // 水宝宝鱼人
+            var expectedPlayAreaSize = battleSize + 1
+            if (battleSize <= 5) {
+                expectedPlayAreaSize = battleSize + 2
+            }
+            while (me.playArea.cards.size < expectedPlayAreaSize && maxWait > 0) {
+                Thread.sleep(500L)
+                maxWait -= 1
+            }
+            Thread.sleep(500L)
+        }
+        return getNewCard
     }
 
     private fun attackForAllCardsInPlayArea() {
