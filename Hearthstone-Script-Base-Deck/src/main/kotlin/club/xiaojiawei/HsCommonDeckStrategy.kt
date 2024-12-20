@@ -106,23 +106,29 @@ class HsCommonDeckStrategy : DeckStrategy() {
         var highIndex = 0;
         Thread.sleep(300)
         for ((index, card) in cards.withIndex()) {
-            log.info { "card：${card.toSimpleString()}, index: ${index}, zonePos: ${card.zonePos}" }
+            log.info { "card：${card.toSimpleString()}, index: ${index}, zonePos: ${card.zonePos}, rivalCount: ${rivalCount}" }
             if (card.cardId == "VAC_321t") { // 爆发
                 return index
             }
             else if (card.cardId == "GDB_430") { // 小行星
-                highCost = 100
-                highIndex = index
+                if (highCost < 100) {
+                    highCost = 100
+                    highIndex = index
+                }
             }
             else if (card.cardId == "VAC_323" && rivalCount >= 4) {
-                highCost = 200
-                highIndex = index
+                if (highCost < 200) {
+                    highCost = 200
+                    highIndex = index
+                }
             }
             else if (card.cardId == "GDB_445" && rivalCount >= 4) {
-                highCost = 150
-                highIndex = index
+                if (highCost < 150) {
+                    highCost = 150
+                    highIndex = index
+                }
             }
-            if (card.cost > highCost) {
+            else if (card.cost > highCost) {
                 highCost = card.cost
                 highIndex = index
             }

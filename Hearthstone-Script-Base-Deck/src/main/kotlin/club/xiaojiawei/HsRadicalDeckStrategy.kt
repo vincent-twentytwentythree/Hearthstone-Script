@@ -236,7 +236,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         }
     }
 
-    private fun waitForUI(card: Card, handSize: Int, battleSize: INt): Boolean {
+    private fun waitForUI(card: Card, handSize: Int, battleSize: Int): Boolean {
         val me = War.me
         var hands = me.handArea.cards.toList()
         var maxWait = 10

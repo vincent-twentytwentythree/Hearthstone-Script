@@ -164,7 +164,16 @@ object DeckStrategyActuator {
         val index = deckStrategy?.executeDiscoverChooseCard(*cards)?:0
         War.me.let {
             if (cards.size > 0) {
-                GameUtil.clickDiscover(cards[index].zonePos?:0, cards.size)
+                var retry = 0
+                var hands = War.me.handArea.cards.size
+                while (retry < 3) {
+                    GameUtil.clickDiscover(cards[index].zonePos?:0, cards.size)
+                    retry += 1
+                    Thread.sleep(500L)
+                    if (War.me.handArea.cards.size > hands) {
+                        break
+                    }
+                }
                 SystemUtil.delayShort()
                 val card = cards[index]
                 log.info { "选择了：" + card.toSimpleString() }
