@@ -107,7 +107,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, emptyList(), emptyList())
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, mutableMapOf())
     }
 
     override fun executeOutCard() { // MYWEN
@@ -122,6 +122,17 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             val playedCard: ArrayList<Card> = arrayListOf()
             var retry: Int = 0
             var heroPlay = false
+            var overload = 0
+            if (playedActions.size > 0) {
+                var lastAction = playedActions.lastOrNull()
+                if (lastAction != null) {
+                    overload = lastAction.count { it.cardId == "CS3_007" }
+                }
+            }
+            if (War.me.overloadLocked != overload) {
+                log.info { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
+            }
+
             while (retry <= 5) {
                 val me = War.me
                 val rival = War.rival
@@ -144,7 +155,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toMutableList()
                 var predictActionRequest = PredictActionRequest(position,
                                                                 round,
-                                                                me.usableResource,
+                                                                me.usableResource + (War.me.overloadLocked - overload),
                                                                 handsToPlaySimple.map { it.cardId } ,
                                                                 arrayListOf(),
                                                                 playedActions.map { it.map{ card -> card.cardId } },
@@ -202,12 +213,27 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 else if (predictActionResponse.status != "succ") {
                     Thread.sleep(2000)
                 }
-                // 所有牌出完, 重新跑模型, 确认没有漏牌
-                val coreRivalCardList = predictActionResponse.coreRivalCardList.toSet()
-                val coreCompanionCardList = predictActionResponse.coreCompanionCardList.toSet()
+                // 所有牌出完, 重新跑模型, 确认没有漏牌 
+                // MYWEN todo coreCards 没有本回合出的随从，主要影响到突袭和冲锋
+                val coreCards: MutableMap<String, Double> = predictActionResponse.coreCards
+                val mutableMap: MutableMap<Card, Double> = mutableMapOf()
+                War.rival.playArea.cards.forEach {
+                    var value: Double = 1.0
+                    value += coreCards.getOrDefault(it.cardId, 0.0)
+                    mutableMap[it] = value
+                }
+
+                War.me.playArea.cards.forEach {
+                    var value: Double = 1.0
+                    value += coreCards.getOrDefault(it.cardId, 0.0)
+                    if (minionNeededToBurst.contains(it)) {
+                        value += 2.0
+                    }
+                    mutableMap[it] = value
+                }
+
                 DeckStrategyUtil.cleanPlay(1.2, 1.2,
-                    War.rival.playArea.cards.toList().filter { it.canBeAttacked() && coreRivalCardList.contains(it.cardId)},
-                    War.me.playArea.cards.toList().filter { minionNeededToBurst.contains(it) || coreCompanionCardList.contains(it.cardId) }
+                    mutableMap
                 )
                 attackForAllCardsInPlayArea()
                 retry += 1

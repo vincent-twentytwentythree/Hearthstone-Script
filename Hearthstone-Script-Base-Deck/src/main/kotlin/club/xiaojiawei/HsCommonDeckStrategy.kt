@@ -33,7 +33,7 @@ class HsCommonDeckStrategy : DeckStrategy() {
         return "e71234fa-base-deck-97e9-1f4e126cd33b"
     }
 
-    override fun executeChangeCard(cards: HashSet<Card>) {
+    override fun executeChangeCard(cards: HashSet<Card>) { // 起手换牌
         cards.removeIf { 
             card -> card.cost > 2
             || card.cardId == "DEEP_008" // 针岩图腾
@@ -41,7 +41,7 @@ class HsCommonDeckStrategy : DeckStrategy() {
         }
     }
 
-    override fun executeOutCard() {
+    override fun executeOutCard() { // MYWEN
         val me = War.me
         val rival = War.rival
 

@@ -124,14 +124,13 @@ object DeckStrategyUtil {
      * @param myAtcWeight 我方随从攻击力权重，大于1表示攻击力比生命值重要
      * @param rivalAtcWeight 敌方随从攻击力权重，rivalAtcWeight/myAtcWeight小于1时认为我方随从更加厉害，防止出现我方2-2解对方2-2的情况
      */
-    private fun clean(
+    private fun clean( // MYWEN 随从交换
         myAtcWeight: Double,
         rivalAtcWeight: Double,
-        coreRivalList: List<Card> = emptyList(),
-        coreCompanionList: List<Card> = emptyList(),
+        mutableMap: MutableMap<Card, Double> = mutableMapOf()
     ) {
         val myCardWeightCalc: Function<Card, Double> = Function {
-            var value = CARD_WEIGHT_TRIE[it.cardId]?.weight ?: 1.0
+            var value = mutableMap.getOrDefault(it, 1.0)
             if (it.isDeathRattle) {
                 value -= 0.3
             }
@@ -190,9 +189,9 @@ object DeckStrategyUtil {
         var firstMyCards: MutableList<SimulateCard>? = null
         var text: String
 
-//        清理嘲讽
+        //  清理嘲讽
         val myAttackCountCalc: Function<Card, Int> = Function<Card, Int> {
-            if (it.canAttack() && !coreCompanionList.contains(it)) {
+            if (it.canAttack()) {
                 if (it.isWindFury) 2 else 1
             } else 0
         }
@@ -242,54 +241,6 @@ object DeckStrategyUtil {
             } else {
                 firstMyCards = result.myCard
                 rivalPlayCards.removeIf { it.isTaunt && it.canBeAttacked() }
-            }
-        }
-
-        // 清理核心
-        val findCoreRivalCardCount = this.rivalPlayCards.count { coreRivalList.contains(it) }
-        if (findCoreRivalCardCount > 0) {
-
-            myInversionAttackCountCalc = Function<Card, Int> { 0 }
-            rivalAttackCountCalc = Function<Card, Int> {
-                if (coreRivalList.contains(it) && it.canBeAttacked()) {
-                    1
-                } else 0
-            }
-            rivalInversionAttackCountCalc = Function<Card, Int> { 0 }
-            val (myCards, rivalCards) = getCleanData(
-                myPlayCards = myPlayCards,
-                rivalPlayCards = rivalPlayCards,
-                myAtcWeightCalc = myAtcWeightCalc,
-                rivalAtcWeightCalc = rivalAtcWeightCalc,
-                myAttackCountCalc = myAttackCountCalc,
-                myInversionAttackCountCalc = myInversionAttackCountCalc,
-                rivalAttackCountCalc = rivalAttackCountCalc,
-                rivalInversionAttackCountCalc = rivalInversionAttackCountCalc,
-                myCardWeightCalc = myCardWeightCalc,
-                rivalCardWeightCalc = rivalCardWeightCalc,
-            )
-            text = "开始思考清理核心"
-            log.info { text }
-            if (!EXEC_ACTION) {
-                println(text)
-            }
-            val result = calcClean(myCards, rivalCards, true)
-            val deathCount = result.execAction()
-            if (deathCount < findCoreRivalCardCount) {
-                return
-            }
-            if (EXEC_ACTION) {
-                Thread.sleep(3500)
-                if (this.rivalPlayCards.count { coreRivalList.contains(it) } > 0) {
-                    return
-                }
-                myPlayCards = this.myPlayCards.toMutableList()
-                rivalPlayCards = this.rivalPlayCards.toMutableList()
-                this.myPlayArea.hero?.let { myPlayCards.add(it) }
-                this.rivalPlayArea.hero?.let { rivalPlayCards.add(it) }
-            } else {
-                firstMyCards = result.myCard
-                rivalPlayCards.removeIf { coreRivalList.contains(it) && it.canBeAttacked() }
             }
         }
 
@@ -410,14 +361,14 @@ object DeckStrategyUtil {
                             0,
                             mutableListOf(),
                             inversionResult,
-                            true, disableInversion = false
+                            inversion = true, disableInversion = false
                         )
                         result = Result(calcAllWeight(initWeight, inversionResult.allWeight))
                     }
                     recursionCalcClean(
                         tempMyCards, tempRivalCards,
                         0,
-                        mutableListOf(), result, false, realDisableInversion
+                        mutableListOf(), result, inversion = false, disableInversion = realDisableInversion
                     )
                     finalResult.setNewResult(result)
                 }, CALC_THREAD_POOL))
@@ -461,7 +412,7 @@ object DeckStrategyUtil {
 
         val myCard = myCards[myIndex]
         val task = mutableListOf<CompletableFuture<Void>>()
-        if (myCard.canAttack(inversion)) {
+        if (myCard.canAttack(inversion)) { // MYWEN
             for (rivalCard in rivalCards) {
 //                敌方随从能被攻击，突袭无法攻击英雄
                 if (rivalCard.canBeAttacked(inversion)
@@ -609,11 +560,10 @@ object DeckStrategyUtil {
     fun cleanPlay(
         myAtcWeight: Double = 1.2,
         rivalAtcWeight: Double = 1.2,
-        coreRivalList: List<Card> = emptyList(),
-        coreCompanionList: List<Card> = emptyList(),
+        mutableMap: MutableMap<Card, Double> = mutableMapOf()
     ) {
         assign()
-        clean(myAtcWeight, rivalAtcWeight, coreRivalList, coreCompanionList)
+        clean(myAtcWeight, rivalAtcWeight, mutableMap)
     }
 
     fun calcPowerOrderConvert(cards: List<Card>, target: Int,
@@ -634,7 +584,7 @@ object DeckStrategyUtil {
         return calcPowerOrder(convertToSimulateWeightCard(cards), target)
     }
 
-    fun calcPowerOrder(cards: List<SimulateWeightCard>, oriTarget: Int): Pair<Double, List<SimulateWeightCard>> {
+    fun calcPowerOrder(cards: List<SimulateWeightCard>, oriTarget: Int): Pair<Double, List<SimulateWeightCard>> { // MYWEN dp
         // dp[j] 表示总 cost 为 j 时的最高 (cost + weight) 值
         var luckCoin = cards.count { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }
         var luckCoinList: MutableList<SimulateWeightCard> = cards.filter { it.card.cardId == "GAME_005" || it.card.cardId == "CORE_EX1_169" }.toMutableList()

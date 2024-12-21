@@ -163,7 +163,7 @@ object DeckStrategyActuator {
         SystemUtil.delayShortMedium()
         val index = deckStrategy?.executeDiscoverChooseCard(*cards)?:0
         War.me.let {
-            if (cards.size > 0) {
+            if (cards.size > 0) { // MYWEN 选牌策略
                 var retry = 0
                 var hands = War.me.handArea.cards.size
                 while (retry < 3) {

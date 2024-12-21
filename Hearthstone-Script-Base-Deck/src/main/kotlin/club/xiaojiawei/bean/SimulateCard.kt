@@ -7,7 +7,7 @@ import kotlin.math.max
  * @author 肖嘉威 xjw580@qq.com
  * @date 2024/9/18 15:26
  */
-class SimulateCard(
+class SimulateCard( // MYWEN 随从交互
     val card: Card,
     var attackCount: Int,
     var inversionAttackCount: Int,
