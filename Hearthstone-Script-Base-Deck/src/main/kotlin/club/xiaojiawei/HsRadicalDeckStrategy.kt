@@ -152,11 +152,10 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 else {
                     position = "second_hand"
                 }
-                var handsToPlaySimple = me.handArea.cards.filter { checkWhetherCanBeUsedThisTurnSimple(it) }.toMutableList()
                 var predictActionRequest = PredictActionRequest(position,
                                                                 round,
                                                                 me.usableResource + (War.me.overloadLocked - overload),
-                                                                handsToPlaySimple.map { it.cardId } ,
+                                                                me.handArea.cards.map { it.cardId } ,
                                                                 arrayListOf(),
                                                                 playedActions.map { it.map{ card -> card.cardId } },
                                                                 toRivalList.map { it.cardId },
@@ -165,6 +164,26 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                                                 )
                 var predictActionResponse = sendPostRequest(predictActionRequest)
 
+                val mutableMap: MutableMap<Card, Double> = mutableMapOf()
+                if (predictActionResponse.status == "succ") {
+                    val coreCards: MutableMap<String, Double> = predictActionResponse.coreCards
+                    War.rival.playArea.cards.forEach {
+                        var value: Double = 1.0
+                        value += coreCards.getOrDefault(it.cardId, 0.0)
+                        mutableMap[it] = value
+                    }
+    
+                    War.me.playArea.cards.forEach {
+                        var value: Double = 1.0
+                        value += coreCards.getOrDefault(it.cardId, 0.0)
+                        if (minionNeededToBurst.contains(it)) {
+                            value += 2.0
+                        }
+                        mutableMap[it] = value
+                    }
+                }
+
+                var playCardSucc = true
                 if (predictActionResponse.status == "succ" && predictActionResponse.action.size != 0) {
                     log.info { "待出牌：${predictActionResponse}" }
 
@@ -179,7 +198,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                             }
                         }
                         if (card == null) {
-                            continue
+                            playCardSucc = false
+                            break
                         }
                         if (predictActionResponse.cost <= predictActionResponse.crystal - 2
                             && (cardId == "TOY_508" || cardId.startsWith("VAC_323")) // 打之前，加法强
@@ -207,39 +227,31 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                     break
                                 }
                             }
+                            else {
+                                playCardSucc = false
+                                break
+                            }
                         }
                     }
                 }
                 else if (predictActionResponse.status != "succ") {
                     Thread.sleep(2000)
                 }
-                // 所有牌出完, 重新跑模型, 确认没有漏牌 
-                // MYWEN todo coreCards 没有本回合出的随从，主要影响到突袭和冲锋
-                val coreCards: MutableMap<String, Double> = predictActionResponse.coreCards
-                val mutableMap: MutableMap<Card, Double> = mutableMapOf()
-                War.rival.playArea.cards.forEach {
-                    var value: Double = 1.0
-                    value += coreCards.getOrDefault(it.cardId, 0.0)
-                    mutableMap[it] = value
-                }
-
-                War.me.playArea.cards.forEach {
-                    var value: Double = 1.0
-                    value += coreCards.getOrDefault(it.cardId, 0.0)
-                    if (minionNeededToBurst.contains(it)) {
-                        value += 2.0
-                    }
-                    mutableMap[it] = value
-                }
-
+                // 所有牌出完, 重新跑模型, 确认没有漏牌
+                // MYWEN todo mutableMap 没有本回合出的随从，主要影响到突袭和冲锋
                 DeckStrategyUtil.cleanPlay(1.2, 1.2,
                     mutableMap
                 )
                 attackForAllCardsInPlayArea()
                 retry += 1
 
-                var smallCard = me.handArea.cards.sortedBy { it.cost }.firstOrNull()
-                if (smallCard == null || me.usableResource < smallCard.cost || me.usableResource == 0) {
+                if (playCardSucc == false) { // 出牌失败，重试
+                    continue
+                }
+
+                var smallCard = me.handArea.cards.filter { it.cardId != "GAME_005" } .sortedBy { it.cost }.firstOrNull()
+                var coinCount = me.handArea.cards.count { it.cardId == "GAME_005" }
+                if (smallCard == null || me.usableResource + coinCount < smallCard.cost || me.usableResource == 0) {
                     break
                 }
             }
@@ -415,27 +427,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         return commonDeckStrategy.executeDiscoverChooseCard(*cards)
     }
 
-    private fun checkWhetherCanBeUsedThisTurnSimple (card: Card): Boolean {
-        val me = War.me
-        val rival = War.rival
-        var plays = me.playArea.cards.toList()
-        var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
-        var hands = me.handArea.cards.toList()
-        if (card.cardType === CardTypeEnum.SPELL){
-            return true
-        }
-        else { //////////////////////////////////////////////////////////////////////////////////////非法术牌
-            if (me.playArea.isFull) return false;
-            if (card.cardId == "CS3_034") { // 织法者玛里苟斯
-                if (hands.size >= 5) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private fun checkWhetherCanBeUsedThisTurn (card: Card): Boolean {
+    private fun checkWhetherCanBeUsedThisTurn (card: Card, mutableMap: MutableMap<Card, Double> = mutableMapOf()): Boolean {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
@@ -443,8 +435,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         var hands = me.handArea.cards.toList()
         if (card.cardType === CardTypeEnum.SPELL){
             if (card.cardId == "GDB_445") { // 陨石风暴
-                var highCostCount = me.playArea.cards.filter { playCard -> playCard.cost >= 3}.count()
-                var highCostCountRival = toRivalList.filter { playCard -> playCard.cost >= 3}.count()
+                var highCostCount = me.playArea.cards.filter { mutableMap.getOrDefault(it, 1.0) >= 2}.count()
+                var highCostCountRival = toRivalList.filter { mutableMap.getOrDefault(it, 1.0) >= 2}.count()
                 if (highCostCount >= 3 && highCostCountRival <= 2) {
                     log.info { "too much high cost cards" }
                     return false;
@@ -489,7 +481,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = toRivalList.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -498,7 +490,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.cardId.startsWith("ETC_076") || // 街舞起跳
                 card.cardId.startsWith("TTN_079") || // 星轨晕环
                 card.cardId.startsWith("GDB_439")) { // 虫外有虫
-                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -539,7 +531,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
             card.cardId.startsWith("WORK_009") // 月度魔范员工
             ) { 
-                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -548,7 +540,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         return true;
     }
 
-    private fun playCard(card: Card): Boolean {
+    private fun playCard(card: Card, mutableMap: MutableMap<Card, Double> = mutableMapOf()): Boolean {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
@@ -569,7 +561,13 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "MIS_709" // 圣光荧光棒
                 || card.cardId == "CS2_029" // 火球术
             ) {
-                return runWithRetry(3, 200, card, rival.playArea.hero)
+                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                if (highCost == null || mutableMap.getOrDefault(highCost, 1.0) < 2.0) { // 如果是普通牌，打英雄
+                    return runWithRetry(3, 200, card, rival.playArea.hero)
+                }
+                else {
+                    return runWithRetry(3, 200, card, highCost)
+                }
             }
             else if (
                 card.cardId.startsWith("GDB_305") // 阳炎耀斑
@@ -592,7 +590,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = toRivalList.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -602,7 +600,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
             else if (card.cardId.startsWith("VAC_916")) { // 神圣佳酿
-                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return runWithRetry(3, 200, card, me.playArea.hero)
                 }
@@ -614,7 +612,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.cardId.startsWith("ETC_076") || // 街舞起跳
                 card.cardId.startsWith("TTN_079") || // 星轨晕环
                 card.cardId.startsWith("GDB_439")) { // 虫外有虫
-                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -631,7 +629,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = toRivalList.find { card-> card.isTaunt }
-                var canBeAttacked = toRivalList.sortedBy { card.cost }.lastOrNull()
+                var canBeAttacked = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 var firstCard = toRivalList.firstOrNull()
                 tauntCard?.let {
                     return runWithRetry(3, 200, card, it)
@@ -650,7 +648,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
             card.cardId.startsWith("WORK_009") // 月度魔范员工
             ) {
-                var highCost = me.playArea.cards.sortedBy { playCard -> playCard.cost }.lastOrNull()
+                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
