@@ -129,9 +129,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     overload = lastAction.count { it.cardId == "CS3_007" }
                 }
             }
-            if (War.me.overloadLocked != overload) {
-                log.info { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
-            }
+            log.info { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
 
             while (retry <= 5) {
                 val me = War.me
