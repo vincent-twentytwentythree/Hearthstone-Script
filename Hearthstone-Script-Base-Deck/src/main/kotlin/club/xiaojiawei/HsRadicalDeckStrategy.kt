@@ -402,7 +402,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         var plays = me.playArea.cards.toList()
         plays.filter{ playCard -> playCard.canAttack(false) }.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .forEach { playCard ->
             var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
-            var tauntCard = toRivalList.find { card-> card.isTaunt }
+            var tauntCard = toRivalList.filter { it.isTaunt } .sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
             tauntCard?.let {
                 if (mutableMap.getOrDefault(playCard, 1.0) < 2.0 || mutableMap.getOrDefault(tauntCard, 1.0) >= 2.0) {
                     log.info { "card: $playCard, attack: $tauntCard" }
@@ -509,7 +509,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
-                var tauntCard = toRivalList.find { card-> card.isTaunt }
+                var tauntCard = toRivalList.filter { it.isTaunt } .sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 var canBeAttacked = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 log.info { "tauntCard: $tauntCard, canBeAttacked: $canBeAttacked, cardSize: ${toRivalList.size}"}
                 if (tauntCard == null && canBeAttacked == null && toRivalList.size != 0) {
@@ -574,7 +574,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "MIS_709" // 圣光荧光棒
                 || card.cardId == "CS2_029" // 火球术
             ) {
-                var tauntCard = toRivalList.find { it.isTaunt }
+                var tauntCard = toRivalList.filter { it.isTaunt } .sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 
                 var highCost = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 if (tauntCard != null) {
@@ -659,7 +659,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
-                var tauntCard = toRivalList.find { it.isTaunt }
+                var tauntCard = toRivalList.filter { it.isTaunt } .sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 var canBeAttacked = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 var firstCard = toRivalList.firstOrNull()
                 tauntCard?.let {
