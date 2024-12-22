@@ -400,7 +400,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        plays.filter{ playCard -> playCard.canAttack(false) }.sortedBy { mutableMap.getOrDefault(it, 1.0) } .forEach { playCard ->
+        plays.filter{ playCard -> playCard.canAttack(false) }.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .forEach { playCard ->
             var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
             var tauntCard = toRivalList.find { card-> card.isTaunt }
             tauntCard?.let {
@@ -414,7 +414,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }?:let {
                 if (playCard.isAttackableByRush || (playCard.isRush && playCard.numTurnsInPlay == 0)) {
-                    var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                    var highCost = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                     highCost?.let {
                         log.info { "card: $playCard, attack: $tauntCard" }
                         playCard.action.attack(highCost)
@@ -487,7 +487,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -496,7 +496,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.cardId.startsWith("ETC_076") || // 街舞起跳
                 card.cardId.startsWith("TTN_079") || // 星轨晕环
                 card.cardId.startsWith("GDB_439")) { // 虫外有虫
-                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = me.playArea.cards.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -510,7 +510,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = toRivalList.find { card-> card.isTaunt }
-                var canBeAttacked = toRivalList.sortedBy { card.cost }.lastOrNull()
+                var canBeAttacked = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 log.info { "tauntCard: $tauntCard, canBeAttacked: $canBeAttacked, cardSize: ${toRivalList.size}"}
                 if (tauntCard == null && canBeAttacked == null && toRivalList.size != 0) {
                     return false;
@@ -537,7 +537,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
             card.cardId.startsWith("WORK_009") // 月度魔范员工
             ) { 
-                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = me.playArea.cards.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -575,7 +575,8 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "CS2_029" // 火球术
             ) {
                 var tauntCard = toRivalList.find { it.isTaunt }
-                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                
+                var highCost = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 if (tauntCard != null) {
                     var succ = runWithRetry(3, 200, card, tauntCard)
                     if (succ == false) {
@@ -620,7 +621,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId.startsWith("VAC_951") // “健康”饮品
                 || card.cardId.startsWith("CS2_022") // 变形术
             ) { 
-                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -630,7 +631,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
             else if (card.cardId.startsWith("VAC_916")) { // 神圣佳酿
-                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = me.playArea.cards.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return runWithRetry(3, 200, card, me.playArea.hero)
                 }
@@ -642,7 +643,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 card.cardId.startsWith("ETC_076") || // 街舞起跳
                 card.cardId.startsWith("TTN_079") || // 星轨晕环
                 card.cardId.startsWith("GDB_439")) { // 虫外有虫
-                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = me.playArea.cards.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
@@ -659,7 +660,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
                 var tauntCard = toRivalList.find { it.isTaunt }
-                var canBeAttacked = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var canBeAttacked = toRivalList.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 var firstCard = toRivalList.firstOrNull()
                 tauntCard?.let {
                     return runWithRetry(3, 200, card, it)
@@ -678,7 +679,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             else if (card.cardId.startsWith("TTN_087") || // 吸附寄生体
             card.cardId.startsWith("WORK_009") // 月度魔范员工
             ) {
-                var highCost = me.playArea.cards.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                var highCost = me.playArea.cards.sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }).lastOrNull()
                 if (highCost == null) {
                     return false;
                 }
