@@ -40,6 +40,7 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
 
     private var lastDiscoverEntityId: String? = null
     private var lastCreator: String? = null
+    private var discoveryMap: MutableMap<String, Int> = mutableMapOf()
 
     override fun deal(line: String) {
         dealing = true
@@ -65,10 +66,14 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                     if (accessFile.length() <= mark && me.isValid()) {
                         val cards: List<Card> = me.setasideArea.cards.toMutableList()
                         // log.info { "检测发现动作 ${cards} ${lastDiscoverEntityId} " }
-                        if (cards.size > 0 && lastDiscoverEntityId != cards.last().entityId && lastCreator != cards.last().creator && cards.last().zonePos != null) {
+                        if (cards.size > 0 && lastDiscoverEntityId != cards.last().entityId 
+                        && lastCreator != cards.last().creator
+                        && discoveryMap.contains(cards.last().entityId)
+                        ) {
                             val discoveryCards: MutableList<Card> = mutableListOf()
                             for (card in cards.reversed()) {
-                                if (card.entityId != lastDiscoverEntityId && !card.cardId.isBlank() && card.creator == cards.last().creator ) {
+                                card.zonePos = discoveryMap.getOrDefault(card.entityId, null)
+                                if (card.entityId != lastDiscoverEntityId && !card.cardId.isBlank() && card.creator == cards.last().creator) {
                                     discoveryCards.add(card)
                                     if (card.zonePos == null) {
                                         log.info { "lostPos, card: ${card}" }
@@ -97,6 +102,7 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
                                             *(discoveryCards.sortedBy { it.zonePos } .toTypedArray())
                                         )
                                     }, "Discover Choose Card Thread").also { addTask(it) }).start()
+                                    discoveryMap.clear()
                                 }
                             }
 
@@ -111,16 +117,13 @@ abstract class AbstractPhaseStrategy : PhaseStrategy {
     
                         val extraEntity = ExtraEntity()
                         parseCommonEntity(extraEntity, l)
-                        if (!extraEntity.cardId.isBlank()) {
-                            me.setasideArea.cards.forEach {
-                                if (it.entityId == extraEntity.entityId) {
-                                    log.info { "extraEntity: ${extraEntity}, card: ${it} "}
-                                    it.zonePos = zonePos
-                                }
-                            }
+                        log.info { "extraEntity: ${extraEntity}"}
+                        if (!extraEntity.cardId.isBlank() && !extraEntity.entityId.isBlank()) {
+                            discoveryMap[extraEntity.entityId] = zonePos
                         }
                         l = accessFile.readLine()
                     }
+                    continue
                 } else if (isRelevance(l)) {
                     log.debug { l }
                     if (l.contains(TAG_CHANGE)) {

@@ -559,13 +559,14 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "MIS_709" // 圣光荧光棒
                 || card.cardId == "CS2_029" // 火球术
             ) {
-                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
-                if (highCost == null || mutableMap.getOrDefault(highCost, 1.0) < 2.0) { // 如果是普通牌，打英雄
-                    return runWithRetry(3, 200, card, rival.playArea.hero)
-                }
-                else {
-                    return runWithRetry(3, 200, card, highCost)
-                }
+                return runWithRetry(3, 200, card, rival.playArea.hero)
+                // var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                // if (highCost == null || mutableMap.getOrDefault(highCost, 1.0) < 2.0) { // 如果是普通牌，打英雄
+                //     return runWithRetry(3, 200, card, rival.playArea.hero)
+                // }
+                // else {
+                //     return runWithRetry(3, 200, card, highCost)
+                // }
             }
             else if (
                 card.cardId.startsWith("GDB_305") // 阳炎耀斑
@@ -626,7 +627,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             if (me.playArea.isFull) return false;
             // card.isBattlecry.isTrue {
             if (card.cardId == "GDB_901") { // 极紫外破坏者
-                var tauntCard = toRivalList.find { card-> card.isTaunt }
+                var tauntCard = toRivalList.find { it.isTaunt }
                 var canBeAttacked = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                 var firstCard = toRivalList.firstOrNull()
                 tauntCard?.let {
