@@ -127,7 +127,9 @@ object DeckStrategyUtil {
     private fun clean( // MYWEN 随从交换
         myAtcWeight: Double,
         rivalAtcWeight: Double,
-        mutableMap: MutableMap<Card, Double> = mutableMapOf()
+        mutableMap: MutableMap<Card, Double> = mutableMapOf(),
+        ignoreRival: List<Card> = emptyList<Card>(),
+        ignoreCompanion: List<Card> = emptyList<Card>(),
     ) {
         val myCardWeightCalc: Function<Card, Double> = Function {
             var value = mutableMap.getOrDefault(it, 1.0)
@@ -181,8 +183,8 @@ object DeckStrategyUtil {
             value
         }
 
-        var myPlayCards = this.myPlayCards.toMutableList()
-        var rivalPlayCards = this.rivalPlayCards.toMutableList()
+        var myPlayCards = this.myPlayCards.filter { !ignoreCompanion.contains(it) } .toMutableList()
+        var rivalPlayCards = this.rivalPlayCards.filter { !ignoreRival.contains(it) } .toMutableList()
         this.myPlayArea.hero?.let { myPlayCards.add(it) }
         this.rivalPlayArea.hero?.let { rivalPlayCards.add(it) }
 
@@ -560,10 +562,12 @@ object DeckStrategyUtil {
     fun cleanPlay(
         myAtcWeight: Double = 1.2,
         rivalAtcWeight: Double = 1.2,
-        mutableMap: MutableMap<Card, Double> = mutableMapOf()
+        mutableMap: MutableMap<Card, Double> = mutableMapOf(),
+        ignoreRival: List<Card> = emptyList<Card>(),
+        ignoreCompanion: List<Card> = emptyList<Card>(),
     ) {
         assign()
-        clean(myAtcWeight, rivalAtcWeight, mutableMap)
+        clean(myAtcWeight, rivalAtcWeight, mutableMap, ignoreRival, ignoreCompanion)
     }
 
     fun calcPowerOrderConvert(cards: List<Card>, target: Int,

@@ -107,7 +107,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, mutableMapOf())
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, mutableMapOf(), 0)
     }
 
     override fun executeOutCard() { // MYWEN
@@ -217,7 +217,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         if (me.usableResource >= card.cost){
                             var handSize = me.handArea.cards.size
                             var battleSize = me.playArea.cards.size
-                            var succ = playCard(card)
+                            var succ = playCard(card, mutableMap, predictActionResponse)
                             if (succ == true) {
                                 playedCard.add(card)
                                 val getNewCard = waitForUI(card, handSize, battleSize)
@@ -232,25 +232,28 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                         }
                     }
                 }
-                else if (predictActionResponse.status != "succ") {
+                
+                if (predictActionResponse.status != "succ") {
                     Thread.sleep(2000)
                 }
-                // 所有牌出完, 重新跑模型, 确认没有漏牌
-                // MYWEN todo mutableMap 没有本回合出的随从，主要影响到突袭和冲锋
-                DeckStrategyUtil.cleanPlay(1.2, 1.2,
-                    mutableMap
-                )
-                attackForAllCardsInPlayArea()
-                retry += 1
+                else {
+                    // 所有牌出完, 重新跑模型, 确认没有漏牌
+                    // MYWEN todo mutableMap 没有本回合出的随从，主要影响到突袭和冲锋
+                    DeckStrategyUtil.cleanPlay(1.2, 1.2,
+                        mutableMap
+                    )
+                    attackForAllCardsInPlayArea(mutableMap)
+                    retry += 1
 
-                if (playCardSucc == false) { // 出牌失败，重试
-                    continue
-                }
+                    if (playCardSucc == false) { // 出牌失败，重试
+                        continue
+                    }
 
-                var smallCard = me.handArea.cards.filter { it.cardId != "GAME_005" } .sortedBy { it.cost }.firstOrNull()
-                var coinCount = me.handArea.cards.count { it.cardId == "GAME_005" }
-                if (smallCard == null || me.usableResource + coinCount < smallCard.cost || me.usableResource == 0) {
-                    break
+                    var smallCard = me.handArea.cards.filter { it.cardId != "GAME_005" } .sortedBy { it.cost }.firstOrNull()
+                    var coinCount = me.handArea.cards.count { it.cardId == "GAME_005" }
+                    if (smallCard == null || me.usableResource + coinCount < smallCard.cost || me.usableResource == 0) {
+                        break
+                    }
                 }
             }
 
@@ -266,7 +269,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 }
             }
 
-            attackForAllCardsInPlayArea()
+            // attackForAllCardsInPlayArea(mutableMap)
             // 确认没有漏牌
             commonDeckStrategy.executeOutCard()
         }
@@ -393,20 +396,25 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         return getNewCard
     }
 
-    private fun attackForAllCardsInPlayArea() {
+    private fun attackForAllCardsInPlayArea(mutableMap: MutableMap<Card, Double> = mutableMapOf()) {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
-        plays.filter{ playCard -> playCard.canAttack(false) }.forEach { playCard ->
+        plays.filter{ playCard -> playCard.canAttack(false) }.sortedBy { mutableMap.getOrDefault(it, 1.0) } .forEach { playCard ->
             var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
             var tauntCard = toRivalList.find { card-> card.isTaunt }
             tauntCard?.let {
-                log.info { "card: $playCard, attack: $tauntCard" }
-                playCard.action.attack(tauntCard)
-                Thread.sleep(200L)
+                if (mutableMap.getOrDefault(playCard, 1.0) < 2.0 || mutableMap.getOrDefault(tauntCard, 1.0) >= 2.0) {
+                    log.info { "card: $playCard, attack: $tauntCard" }
+                    playCard.action.attack(tauntCard)
+                    Thread.sleep(200L)
+                }
+                else {
+                    log.info { "skip highcost card: $playCard, attack: $tauntCard" }
+                }
             }?:let {
                 if (playCard.isAttackableByRush || (playCard.isRush && playCard.numTurnsInPlay == 0)) {
-                    var highCost = toRivalList.sortedBy { it.cost }.lastOrNull()
+                    var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
                     highCost?.let {
                         log.info { "card: $playCard, attack: $tauntCard" }
                         playCard.action.attack(highCost)
@@ -538,15 +546,22 @@ class HsRadicalDeckStrategy : DeckStrategy() {
         return true;
     }
 
-    private fun playCard(card: Card, mutableMap: MutableMap<Card, Double> = mutableMapOf()): Boolean {
+    private fun playCard(card: Card, mutableMap: MutableMap<Card, Double> = mutableMapOf(), predictActionResponse: PredictActionResponse? = null): Boolean {
         val me = War.me
         val rival = War.rival
         var plays = me.playArea.cards.toList()
         var toRivalList = War.rival.playArea.cards.toList().filter { it.canBeAttacked() }
         if (card.cardType === CardTypeEnum.SPELL) {
             if (card.cardId == "GDB_445") { // 陨石风暴
-                log.info { "start storm, ${plays}" }
-                attackForAllCardsInPlayArea()
+                var powerPlus = predictActionResponse?.powerPlus ?: 0
+                var ignoreRival: List<Card> = toRivalList.filter { !it.isTaunt && it.blood() <= 5 + powerPlus }
+                var ignoreCompanion: List<Card> = plays.filter { it.blood() > 5 + powerPlus }
+                log.info { "start storm, ${plays}, powerPlus: ${powerPlus}, ignoreRival: ${ignoreRival}, ignoreCompanion: ${ignoreCompanion}" }
+                DeckStrategyUtil.cleanPlay(1.2, 1.2,
+                    mutableMap,
+                    ignoreRival,
+                    ignoreCompanion
+                )
                 return runWithRetry(3, 200, card, null)
             }
             else if (
