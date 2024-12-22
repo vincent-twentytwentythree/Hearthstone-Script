@@ -651,16 +651,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                     return runWithRetry(3, 200, card, highCost)
                 }
             }
-            else if (card.cardId == "CS3_034") { // 织法者玛里苟斯
-                var ignoreRival: List<Card> = emptyList<Card>()
-                var ignoreCompanion: List<Card> = plays.filter { it.cardId == "CS3_007" || it.cardId == "GDB_310" }
-                DeckStrategyUtil.cleanPlay(1.2, 1.2,
-                    mutableMap,
-                    ignoreRival,
-                    ignoreCompanion
-                )
-                return runWithRetry(3, 200, card, null)
-            }
             else {
                 return runWithRetry(3, 200, card, null)
             }
@@ -696,6 +686,16 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 else {
                     return runWithRetry(3, 200, card, highCost)
                 }
+            }
+            else if (card.cardId == "CS3_034") { // 织法者玛里苟斯
+                var ignoreRival: List<Card> = emptyList<Card>()
+                var ignoreCompanion: List<Card> = plays.filter { it.cardId == "CS3_007" || it.cardId == "GDB_310" }
+                DeckStrategyUtil.cleanPlay(1.2, 1.2,
+                    mutableMap,
+                    ignoreRival,
+                    ignoreCompanion
+                )
+                return runWithRetry(3, 200, card, null)
             }
             else {
                 return runWithRetry(3, 200, card, null)
