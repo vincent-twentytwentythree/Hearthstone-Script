@@ -74,6 +74,7 @@ class CommonCardAction : CardAction(false) {
                         startRect.lClickMoveDoubleLClick(endRect)
                     }
                     else {
+                        log.info { "belongCard: ${belongCard}, card: ${card}" }
                         startRect.lClickMoveLClick(endRect)
                     }
                     lastRect = endRect

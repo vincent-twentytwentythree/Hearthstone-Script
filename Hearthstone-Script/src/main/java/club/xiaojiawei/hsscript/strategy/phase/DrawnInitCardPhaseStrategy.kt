@@ -106,12 +106,13 @@ object DrawnInitCardPhaseStrategy : AbstractPhaseStrategy() {
     }
 
     private fun whoIsFirst() {
-        if (firstPlayerGameId != "firesnow#51434") {
-            rival.gameId = firstPlayerGameId
-            log.info { "对方游戏id：$firstPlayerGameId" }
-        } else {
+        if (firstPlayerGameId.endsWith("#51434") || firstPlayerGameId.endsWith("#5694") || firstPlayerGameId.endsWith("#5381")) {
             me.gameId = firstPlayerGameId
             log.info { "我方游戏id：$firstPlayerGameId" }
+        }
+        else {
+            rival.gameId = firstPlayerGameId
+            log.info { "对方游戏id：$firstPlayerGameId" }
         }
         if (me.gameId == firstPlayerGameId
             || (rival.gameId.isNotBlank() && rival.gameId != firstPlayerGameId)

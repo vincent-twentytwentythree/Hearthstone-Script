@@ -144,7 +144,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 log.info { "me: $plays" }
 
                 var position = "landlord"
-                if (firstPlayerGameId == "firesnow#51434") { // 先手
+                if (firstPlayerGameId.endsWith("#51434") || firstPlayerGameId.endsWith("#5694") || firstPlayerGameId.endsWith("#5381")) { // 先手
                     position = "landlord"
                 }
                 else {
@@ -559,14 +559,20 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 || card.cardId == "MIS_709" // 圣光荧光棒
                 || card.cardId == "CS2_029" // 火球术
             ) {
-                return runWithRetry(3, 200, card, rival.playArea.hero)
-                // var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
-                // if (highCost == null || mutableMap.getOrDefault(highCost, 1.0) < 2.0) { // 如果是普通牌，打英雄
-                //     return runWithRetry(3, 200, card, rival.playArea.hero)
-                // }
-                // else {
-                //     return runWithRetry(3, 200, card, highCost)
-                // }
+                var highCost = toRivalList.sortedBy { mutableMap.getOrDefault(it, 1.0) }.lastOrNull()
+                if (highCost == null || mutableMap.getOrDefault(highCost, 1.0) < 2.0) { // 如果是普通牌，打英雄
+                    return runWithRetry(3, 200, card, rival.playArea.hero)
+                }
+                else {
+                    log.info { "toRivalList: ${toRivalList}, highCost: ${highCost} " }
+                    var succ = runWithRetry(3, 200, card, highCost)
+                    if (succ == false) {
+                        return runWithRetry(3, 200, card, rival.playArea.hero)
+                    }
+                    else {
+                        return succ
+                    }
+                }
             }
             else if (
                 card.cardId.startsWith("GDB_305") // 阳炎耀斑
