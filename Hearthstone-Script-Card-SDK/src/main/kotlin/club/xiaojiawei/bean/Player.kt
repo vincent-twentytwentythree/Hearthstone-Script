@@ -60,7 +60,7 @@ class Player(val playerId: String) : Entity() {
     @Volatile
     var overloadLocked = 0
         set(value) {
-            if (overloadLocked > 0){
+            if (value > 0){
                 if (resourcesUsed == 0){
                     log.warn { "游戏过载日志打印不规范" }
                     resources -= value

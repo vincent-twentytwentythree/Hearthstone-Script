@@ -100,8 +100,10 @@ class HsCommonDeckStrategy : DeckStrategy() {
         return cards.find { it.isCoinCard }
     }
 
-    override fun executeDiscoverChooseCard(vararg cards: Card): Int { // MYWEN
+    override fun executeDiscoverChooseCard(vararg cards: Card): Int { // MYWEN 发现
         var rivalCount = War.rival.playArea.cards.count { it.canAttack(true) }
+        var count323 = War.me.handArea.cards.count { it.cardId.startsWith("VAC_323") }
+        var count445 = War.me.handArea.cards.count { it.cardId == "GDB_445" }
         var highCost = -1;
         var highIndex = 0;
         Thread.sleep(300)
@@ -116,13 +118,13 @@ class HsCommonDeckStrategy : DeckStrategy() {
                     highIndex = index
                 }
             }
-            else if (card.cardId == "VAC_323" && rivalCount >= 4) {
+            else if (card.cardId == "VAC_323" && rivalCount >= 4 && count323 == 0) { // 麦芽岩浆
                 if (highCost < 200) {
                     highCost = 200
                     highIndex = index
                 }
             }
-            else if (card.cardId == "GDB_445" && rivalCount >= 4) {
+            else if (card.cardId == "GDB_445" && rivalCount >= 4 && count445 == 0) { // 陨石风暴
                 if (highCost < 150) {
                     highCost = 150
                     highIndex = index
