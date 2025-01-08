@@ -565,14 +565,14 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                 return runWithRetry(3, 200, card, null)
             }
             else if (
-                card.cardId == "CS2_024" // 寒冰箭
+                card.cardId.contains("CS2_024") // 寒冰箭 CORE_CS2_024
                 || card.cardId == "GDB_456" //自燃
                 || card.cardId == "YOG_526" //触须缠握
                 || card.cardId == "TOY_508" //立体书
                 || card.cardId == "TTN_454" //  殉船
                 || card.cardId == "CORE_AT_064" // 怒袭
                 || card.cardId == "MIS_709" // 圣光荧光棒
-                || card.cardId == "CS2_029" // 火球术
+                || card.cardId.contains("CS2_029") // 火球术 CORE_CS2_029
             ) {
                 var tauntCard = toRivalList.filter { it.isTaunt } .sortedWith(compareBy<Card> { mutableMap.getOrDefault(it, 1.0) }.thenBy { it.cost }) .lastOrNull()
                 
