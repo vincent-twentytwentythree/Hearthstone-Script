@@ -105,8 +105,8 @@ object DrawnInitCardPhaseStrategy : AbstractPhaseStrategy() {
         return false
     }
 
-    private fun whoIsFirst() {
-        if (firstPlayerGameId.endsWith("#51434") || firstPlayerGameId.endsWith("#5694") || firstPlayerGameId.endsWith("#5381")) {
+    private fun whoIsFirst() { // MYWEN
+        if (firstPlayerGameId.endsWith("#51434") || firstPlayerGameId.endsWith("#5694") || firstPlayerGameId.endsWith("#5381") || firstPlayerGameId.endsWith("#21836")) {
             me.gameId = firstPlayerGameId
             log.info { "我方游戏id：$firstPlayerGameId" }
         }
