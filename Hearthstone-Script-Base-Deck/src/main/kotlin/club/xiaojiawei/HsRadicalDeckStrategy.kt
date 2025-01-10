@@ -164,10 +164,6 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                                                 )
                 var predictActionResponse = sendPostRequest(predictActionRequest)
 
-                if (predictActionResponse.needSurrender == true) {
-                    needSurrender == true;
-                    return;
-                }
                 val mutableMap: MutableMap<Card, Double> = mutableMapOf()
                 if (predictActionResponse.status == "succ") {
                     val coreCards: MutableMap<String, Double> = predictActionResponse.coreCards
@@ -257,6 +253,9 @@ class HsRadicalDeckStrategy : DeckStrategy() {
 
                     var smallCard = me.handArea.cards.filter { it.cardId != "GAME_005" } .sortedBy { it.cost }.firstOrNull()
                     var coinCount = me.handArea.cards.count { it.cardId == "GAME_005" }
+                    if (predictActionResponse.needSurrender == true) {
+                        needSurrender = true;
+                    }
                     if (smallCard == null || me.usableResource + coinCount < smallCard.cost || me.usableResource == 0) {
                         break
                     }
