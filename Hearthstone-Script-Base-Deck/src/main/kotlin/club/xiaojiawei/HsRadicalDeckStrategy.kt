@@ -107,7 +107,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             // Handle other exceptions
             log.info { "An error occurred: ${e.message}" }
         }
-        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, mutableMapOf(), 0)
+        return PredictActionResponse("fail", arrayListOf(), arrayListOf(), "fail", 0, 0, 0, mutableMapOf(), 0, true)
     }
 
     override fun executeOutCard() { // MYWEN
@@ -131,7 +131,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
             log.info { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
 
-            while (retry <= 5) {
+            while (retry <= 5) {    
                 val me = War.me
                 val rival = War.rival
                 var plays = me.playArea.cards.toList()
@@ -164,6 +164,10 @@ class HsRadicalDeckStrategy : DeckStrategy() {
                                                                 )
                 var predictActionResponse = sendPostRequest(predictActionRequest)
 
+                if (predictActionResponse.needSurrender == true) {
+                    needSurrender == true;
+                    return;
+                }
                 val mutableMap: MutableMap<Card, Double> = mutableMapOf()
                 if (predictActionResponse.status == "succ") {
                     val coreCards: MutableMap<String, Double> = predictActionResponse.coreCards
