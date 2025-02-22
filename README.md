@@ -37,7 +37,7 @@
 
 - **下载软件**
   
-  - 在 [Gitee release](https://gitee.com/zergqueen/Hearthstone-Script/releases) 或 [Github release](https://github.com/xjw580/Hearthstone-Script/releases) 处下载（Gitee源只发布稳定版）
+  - [Github release](https://github.com/vincent-twentytwentythree/Hearthstone-Script/releases) 处下载
   - hs-script.zip包含完整依赖，下载此文件
   
 - **初次使用**：
@@ -63,7 +63,7 @@
   - 软件内更新
     1. 软件内检测到新版本后可点击下载然后更新，如需更新开发版需到设置里打开更新开发版
   - 手动更新
-    1. 在 [Gitee release](https://gitee.com/zergqueen/Hearthstone-Script/releases) 或 [Github release](https://github.com/xjw580/Hearthstone-Script/releases) 处下载所需版本的hs-script.zip包放置在旧版软件根目录下
+    1. [Github release](https://github.com/vincent-twentytwentythree/Hearthstone-Script/releases) 处下载所需版本的hs-script.zip包放置在旧版软件根目录下
     2. 手动删除根目录下的new_version_temp文件夹如果有的话
     3. 双击根目录下的update.exe
 
