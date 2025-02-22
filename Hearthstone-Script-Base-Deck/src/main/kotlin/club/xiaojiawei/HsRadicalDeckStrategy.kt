@@ -198,7 +198,7 @@ class HsRadicalDeckStrategy : DeckStrategy() {
             }
 
             while (retry <= 5) {
-                log.info { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
+                log.debug { "resource: ${War.me.resources}, usableResource: ${War.me.usableResource}, overload: ${overload}, War.me.overloadLocked: ${War.me.overloadLocked}" }
                 val me = War.me
                 val rival = War.rival
                 var plays = me.playArea.cards.toList()

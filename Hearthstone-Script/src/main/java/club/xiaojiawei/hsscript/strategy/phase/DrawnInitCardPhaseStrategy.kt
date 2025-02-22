@@ -18,7 +18,8 @@ import club.xiaojiawei.status.War.me
 import club.xiaojiawei.status.War.player1
 import club.xiaojiawei.status.War.player2
 import club.xiaojiawei.status.War.rival
-
+import club.xiaojiawei.hsscript.enums.ConfigEnum;
+import club.xiaojiawei.hsscript.utils.ConfigUtil;
 /**
  * 抽起始牌阶段
  * @author 肖嘉威
@@ -106,7 +107,12 @@ object DrawnInitCardPhaseStrategy : AbstractPhaseStrategy() {
         return false
     }
 
-    private fun whoIsFirst() {  
+    private fun whoIsFirst() {
+        myGameId = ConfigUtil.getString(ConfigEnum.PLATFORM_USERNAME)
+        if (!myGameId.matches("^.+#\\d+$".toRegex())) {
+            log.error { "无效战网id：$myGameId" }
+            return;
+        }
         if (firstPlayerGameId == myGameId) // MYWEN
         {
             me.gameId = firstPlayerGameId

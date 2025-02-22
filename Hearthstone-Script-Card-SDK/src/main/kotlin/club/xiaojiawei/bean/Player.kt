@@ -21,7 +21,7 @@ class Player(val playerId: String) : Entity() {
         set(value) {
             field = value
             this.isValid().isTrue {
-                log.info { "playerId:$playerId,gameId:$gameId" }
+                log.debug { "PlayerId:$playerId, GameId:$gameId" }
             }
         }
 

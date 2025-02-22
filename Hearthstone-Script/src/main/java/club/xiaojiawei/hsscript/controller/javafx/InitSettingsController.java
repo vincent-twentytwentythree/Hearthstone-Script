@@ -2,6 +2,7 @@ package club.xiaojiawei.hsscript.controller.javafx;
 
 import club.xiaojiawei.controls.NotificationManager;
 import club.xiaojiawei.controls.PasswordTextField;
+import javafx.scene.control.TextField;
 import club.xiaojiawei.hsscript.enums.ConfigEnum;
 import club.xiaojiawei.hsscript.enums.WindowEnum;
 import club.xiaojiawei.hsscript.utils.ConfigExUtil;
@@ -43,7 +44,7 @@ public class InitSettingsController implements Initializable {
     @FXML
     private PasswordTextField password;
     @FXML
-    private PasswordTextField username;
+    private TextField username;
     @FXML
     private AnchorPane rootPane;
     @FXML
@@ -93,6 +94,10 @@ public class InitSettingsController implements Initializable {
     private boolean checkConfiguration(){
         ConfigUtil.INSTANCE.putString(ConfigEnum.PLATFORM_PASSWORD, password.getText(), true);
         ConfigUtil.INSTANCE.putString(ConfigEnum.PLATFORM_USERNAME, username.getText(), true);
+        if (!username.getText().matches("^.+#\\d+$")) {
+            notificationManager.showError(PLATFORM_CN_NAME + "玩家ID格式不正确，请重新填写", 3);
+            return false;
+        }
         if (!ConfigExUtil.INSTANCE.storePlatformPath(platformPath.getText())){
             notificationManager.showError(PLATFORM_CN_NAME + "安装路径不正确,请重新选择", 3);
             initValue();

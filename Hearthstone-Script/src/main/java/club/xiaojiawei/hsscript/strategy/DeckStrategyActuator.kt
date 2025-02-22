@@ -104,7 +104,6 @@ object DeckStrategyActuator {
         log.info { "执行换牌策略" }
         log.info { "1号玩家牌库数量：" + player1.deckArea.cards.size }
         log.info { "2号玩家牌库数量：" + player2.deckArea.cards.size }
-        War.myGameId = ConfigUtil.getString(ConfigEnum.PLATFORM_USERNAME)
 
         val me = War.me
         try {

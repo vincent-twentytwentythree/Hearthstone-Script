@@ -104,7 +104,6 @@ object CardUtil {
         list.forEach {
             var cardWeight = CardWeight(it.weight, it.powerWeight)
             CARD_WEIGHT_TRIE[it.cardId] = cardWeight
-            log.info { "cardId: " + it.cardId + " card weight: " + cardWeight}
         }
         cardWeightRawData = list.toList()
     }
