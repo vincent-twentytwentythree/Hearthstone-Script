@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@css/versionMsg.css"
+            fx:id="rootPane"
+            fx:controller="club.xiaojiawei.hsscript.controller.javafx.VersionMsgController">
+    <StackPane prefWidth="${rootPane.width}" style="-fx-padding: 15">
+        <VBox style="-fx-spacing: 20;-fx-alignment: center">
+            <HBox>
+                <Label fx:id="version" style="-fx-font-size: 18;-fx-font-weight: bold"/>
+            </HBox>
+            <TextArea promptText="不知道说什么..." fx:id="versionDescription" editable="false" focusTraversable="false"/>
+            <VBox VBox.vgrow="ALWAYS" alignment="CENTER">
+                <HBox VBox.vgrow="ALWAYS" style="-fx-padding: 0 0 25 0" alignment="CENTER_LEFT">
+                    <Text text="感谢"/>
+                    <Hyperlink text="sunchina2001" />
+                    <Hyperlink text="DnullP"/>
+                    <Hyperlink text="Battereamer"/>
+                    <Hyperlink text="xiaohajiayou"/>
+                    <Hyperlink text="John-bai-Smith"/>
+                    <Text text="的反馈"/>
+                </HBox>
+                <Button text="了然" styleClass="btn-ui, btn-ui-error-3d" onAction="#closeWindow"/>
+            </VBox>
+        </VBox>
+    </StackPane>
+</AnchorPane>
