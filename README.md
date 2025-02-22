@@ -6,7 +6,7 @@
 ### 免责申明
 
 本项目仅供学习交流 `Java`，`Kotlin` 和 `炉石传说` 玩法，不得用于任何违反法律法规及游戏协议的地方😡！！！。
-
+感谢开源：https://github.com/xjw580/Hearthstone-Script
 
 
 ### 问题反馈
